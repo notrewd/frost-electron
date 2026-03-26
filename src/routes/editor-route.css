@@ -1,0 +1,28 @@
+/* ReactFlow sets a non-default cursor on the pane for panning/selection.
+   Keep the canvas cursor as the default arrow for the editor route. */
+
+.frost-editor-flow .react-flow__pane {
+  cursor: default !important;
+}
+
+/* Defensive: some versions apply cursor on the renderer/container. */
+.frost-editor-flow .react-flow__renderer,
+.frost-editor-flow .react-flow__container {
+  cursor: default !important;
+}
+/* Remove default react flow selection styling as we provide our own rings */
+.react-flow__node {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+
+/* Prevent selected group nodes from rendering above edge labels and other nodes */
+.react-flow__node-group.selected {
+  z-index: -1 !important;
+}
+
+/* Ensure edge labels are always rendered above edges and nodes */
+.react-flow__edgelabel-renderer {
+  z-index: 2000 !important;
+}
