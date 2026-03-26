@@ -15,6 +15,7 @@ import { generateDiagram } from "./generator.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.setName("Frost");
 const isDev = !app.isPackaged;
 const DEV_URL = "http://localhost:1420";
 
@@ -155,6 +156,11 @@ function createWindow(label, route, options = {}) {
   };
 
   const win = new BrowserWindow(winOptions);
+
+  // Prevent the HTML <title> from overriding the window title
+  win.on("page-title-updated", (e) => {
+    e.preventDefault();
+  });
 
   if (isDev) {
     win.loadURL(`${DEV_URL}#${route}`);
