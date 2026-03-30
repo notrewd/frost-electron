@@ -123,6 +123,19 @@
   }
 }
 
+/* Rounded minimap */
+.react-flow__minimap {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.react-flow__minimap-node {
+  rx: 4;
+  ry: 4;
+}
+
 @font-face {
   font-family: 'Manrope';
   font-weight: 100 900;
