@@ -574,8 +574,9 @@ const EditorRoute = () => {
       <ResizablePanelGroup orientation="horizontal" className="text-sm">
         <ResizablePanel
           className="bg-secondary flex flex-col"
-          minSize={300}
-          defaultSize={300}
+          minSize="300px"
+          defaultSize="300px"
+          groupResizeBehavior="preserve-pixel-size"
         >
           <PanelBar>Library</PanelBar>
           <div className="flex flex-col flex-1 px-4 py-3 min-h-0">
@@ -585,21 +586,22 @@ const EditorRoute = () => {
             />
           </div>
         </ResizablePanel>
-        <ResizablePanel className="flex flex-col" minSize={300}>
+        <ResizablePanel className="flex flex-col" minSize="300px">
           <div ref={reactFlowWrapperRef} className="flex flex-col flex-1">
             <FlowEditor />
           </div>
         </ResizablePanel>
         <ResizablePanel
           className="bg-secondary"
-          minSize={300}
-          defaultSize={300}
+          minSize="300px"
+          defaultSize="300px"
+          groupResizeBehavior="preserve-pixel-size"
         >
           <ResizablePanelGroup orientation="vertical">
             <ResizablePanel
               className="flex flex-col"
-              minSize={200}
-              defaultSize={150}
+              minSize="200px"
+              defaultSize="200px"
             >
               <PanelBar>Project</PanelBar>
               <div className="flex flex-col h-full pl-4 py-2 pb-7 min-h-0 min-w-0">
@@ -609,8 +611,8 @@ const EditorRoute = () => {
             <ResizableHandle className="bg-muted-foreground/25" />
             <ResizablePanel
               className="flex flex-col"
-              minSize={200}
-              defaultSize={200}
+              minSize="200px"
+              defaultSize="200px"
             >
               <PanelBar>Properties</PanelBar>
               <div className="flex flex-col flex-1 px-4 py-2 min-h-0 min-w-0">

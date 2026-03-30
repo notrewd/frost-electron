@@ -98,7 +98,7 @@ const EdgesOutlinerRoute = () => {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0 h-full">
       <div className="shrink-0 sticky top-0 z-10 bg-background">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           Edges Outliner
@@ -126,40 +126,42 @@ const EdgesOutlinerRoute = () => {
             filteredEdges.map((edge) => (
               <div
                 key={edge.id}
-                className={`flex items-center justify-between p-3 rounded-lg border bg-card transition-colors ${
+                className={`flex flex-col gap-2 p-3 rounded-lg border bg-card transition-colors ${
                   edge.selected ? "border-primary" : "border-border"
                 }`}
               >
-                <div className="flex flex-col gap-1 w-1/3">
-                  <span className="text-sm font-medium">Source</span>
-                  <span
-                    className="text-xs text-muted-foreground truncate"
-                    title={edge.source}
-                  >
-                    {edge.source}
-                  </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <span className="text-sm font-medium">Source</span>
+                    <span
+                      className="text-xs text-muted-foreground truncate"
+                      title={edge.source}
+                    >
+                      {edge.source}
+                    </span>
+                  </div>
+
+                  <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+
+                  <div className="flex flex-col gap-1 flex-1 min-w-0 text-right">
+                    <span className="text-sm font-medium">Target</span>
+                    <span
+                      className="text-xs text-muted-foreground truncate"
+                      title={edge.target}
+                    >
+                      {edge.target}
+                    </span>
+                  </div>
                 </div>
 
-                <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+                <Separator />
 
-                <div className="flex flex-col gap-1 w-1/3 text-right">
-                  <span className="text-sm font-medium">Target</span>
-                  <span
-                    className="text-xs text-muted-foreground truncate"
-                    title={edge.target}
-                  >
-                    {edge.target}
-                  </span>
-                </div>
-
-                <Separator orientation="vertical" className="h-10 mx-2" />
-
-                <div className="flex items-center gap-2 flex-1 justify-end shrink-0">
+                <div className="flex items-center gap-2 justify-between">
                   <Select
                     value={edge.type || "association"}
                     onValueChange={(val) => handleUpdateEdgeType(edge.id, val)}
                   >
-                    <SelectTrigger className="w-40 h-8">
+                    <SelectTrigger className="h-8 flex-1 min-w-0">
                       <SelectValue placeholder="Edge Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -171,7 +173,7 @@ const EdgesOutlinerRoute = () => {
                     </SelectContent>
                   </Select>
 
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"

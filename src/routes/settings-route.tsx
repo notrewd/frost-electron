@@ -272,7 +272,10 @@ const SettingsRoute = () => {
   return (
     <SidebarProvider>
       <Sidebar
-        className={cn(type() === "windows" && "mt-8 h-auto!")}
+        className={cn(
+          type() === "macos" && "mt-10 h-auto!",
+          type() === "windows" && "mt-8 h-auto!",
+        )}
         variant="floating"
       >
         <SidebarContent>
