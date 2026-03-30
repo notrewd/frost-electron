@@ -758,11 +758,43 @@ const FlowEditor = () => {
         const edge = currentEdges.find((e) => e.id === id);
         if (edge && reactFlowInstance) {
           const nodes = useFlowStore.getState().nodes;
+
+          const getAbsolutePosition = (node: typeof nodes[0]) => {
+            let x = node.position.x;
+            let y = node.position.y;
+            let pId = node.parentId;
+            while (pId) {
+              const parent = nodes.find((n) => n.id === pId);
+              if (parent) {
+                x += parent.position.x;
+                y += parent.position.y;
+                pId = parent.parentId;
+              } else {
+                break;
+              }
+            }
+            return { x, y };
+          };
+
           const sourceNode = nodes.find((n) => n.id === edge.source);
-          if (sourceNode) {
+          const targetNode = nodes.find((n) => n.id === edge.target);
+          if (sourceNode && targetNode) {
+            const sourcePos = getAbsolutePosition(sourceNode);
+            const targetPos = getAbsolutePosition(targetNode);
+            const sourceCenterX = sourcePos.x + (sourceNode.measured?.width ?? 150) / 2;
+            const sourceCenterY = sourcePos.y + (sourceNode.measured?.height ?? 50) / 2;
+            const targetCenterX = targetPos.x + (targetNode.measured?.width ?? 150) / 2;
+            const targetCenterY = targetPos.y + (targetNode.measured?.height ?? 50) / 2;
             reactFlowInstance.setCenter(
-              sourceNode.position.x,
-              sourceNode.position.y,
+              (sourceCenterX + targetCenterX) / 2,
+              (sourceCenterY + targetCenterY) / 2,
+              { zoom: 1, duration: 800 },
+            );
+          } else if (sourceNode) {
+            const sourcePos = getAbsolutePosition(sourceNode);
+            reactFlowInstance.setCenter(
+              sourcePos.x + (sourceNode.measured?.width ?? 150) / 2,
+              sourcePos.y + (sourceNode.measured?.height ?? 50) / 2,
               { zoom: 1, duration: 800 },
             );
           }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { emit, listen } from "@tauri-apps/api/event";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -24,6 +24,7 @@ const edgeTypes = [
 const EdgesOutlinerRoute = () => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const edgeRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const filteredEdges = edges.filter((edge) => {
     if (!searchQuery.trim()) return true;
@@ -72,6 +73,16 @@ const EdgesOutlinerRoute = () => {
       return isNegated ? !isMatch : isMatch;
     });
   });
+
+  useEffect(() => {
+    const selectedEdge = edges.find((e) => e.selected);
+    if (selectedEdge) {
+      const el = edgeRefs.current.get(selectedEdge.id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [edges]);
 
   useEffect(() => {
     const unlisten = listen<Edge[]>("edges-data", (event) => {
@@ -126,7 +137,11 @@ const EdgesOutlinerRoute = () => {
             filteredEdges.map((edge) => (
               <div
                 key={edge.id}
-                className={`flex flex-col gap-2 p-3 rounded-lg border bg-card transition-colors ${
+                ref={(el) => {
+                  if (el) edgeRefs.current.set(edge.id, el);
+                  else edgeRefs.current.delete(edge.id);
+                }}
+                className={`flex flex-col gap-2 p-3 rounded-lg border bg-card transition-colors scroll-mt-32 ${
                   edge.selected ? "border-primary" : "border-border"
                 }`}
               >
