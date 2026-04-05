@@ -21,7 +21,7 @@ const PanelBar: FC<PanelBarProps> = ({ panelId, children }) => {
       {...listeners}
       className={cn(
         "w-full bg-background/50 flex px-4 py-1 select-none",
-        isDragging ? "cursor-grabbing opacity-50" : "cursor-grab",
+        isDragging && "opacity-50",
       )}
     >
       {children}
