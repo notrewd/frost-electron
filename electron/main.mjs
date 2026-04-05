@@ -802,29 +802,31 @@ function setupIPC() {
         }
       });
 
+      const sendProgress = (current, total, message) => {
+        if (progressWin && !progressWin.isDestroyed()) {
+          progressWin.webContents.send("app-event", "generation-progress", {
+            current,
+            total,
+            message,
+          });
+        }
+      };
+
       try {
         const result = await generateDiagram(
           paths,
           recursive,
           generateGroups,
-          (progress) => {
-            // Send progress updates to the generating window
-            if (progressWin && !progressWin.isDestroyed()) {
-              progressWin.webContents.send(
-                "app-event",
-                "generation-progress",
-                progress,
-              );
-            }
-          },
+          (progress) => sendProgress(progress.current, progress.total, progress.message),
         );
 
-        // Send result to editor
+        // Hand off to editor for batched spawning.
+        // The editor will emit progress updates and close the generating
+        // window once all items have been rendered.
         sendToWindow("editor", "diagram-generated", result);
       } catch (err) {
         console.error("Generation failed:", err);
-      } finally {
-        // Close progress window
+        // Close progress window on error
         if (progressWin && !progressWin.isDestroyed()) {
           progressWin.close();
         }

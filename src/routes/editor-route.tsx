@@ -16,7 +16,7 @@ import type { DragEventData } from "@neodrag/react";
 import type { LibraryPaletteItem } from "@/components/panels/library-panel";
 import type { DiagramGeneratedEvent } from "@/types/events";
 import { useEditorActions } from "@/components/providers/editor-actions-provider";
-import { listen } from "@/lib/electron/events";
+import { emit, listen } from "@/lib/electron/events";
 import { invoke } from "@/lib/electron/invoke";
 import { useProjectStore } from "@/stores/project-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -106,13 +106,47 @@ const EditorRoute = () => {
 
     const diagramGeneratedUnlisten = listen<DiagramGeneratedEvent>(
       "diagram-generated",
-      (event) => {
-        if (event.payload.nodes) {
-          setNodes((prev) => [...prev, ...event.payload.nodes]);
+      async (event) => {
+        const allNodes = event.payload.nodes || [];
+        const allEdges = event.payload.edges || [];
+        const totalItems = allNodes.length + allEdges.length;
+
+        if (totalItems === 0) return;
+
+        const BATCH_SIZE = 5;
+        let spawned = 0;
+
+        const waitForFrame = () =>
+          new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+        // Spawn nodes in batches
+        for (let i = 0; i < allNodes.length; i += BATCH_SIZE) {
+          const batch = allNodes.slice(i, i + BATCH_SIZE);
+          setNodes((prev) => [...prev, ...batch]);
+          spawned += batch.length;
+          emit("generation-progress", {
+            current: spawned,
+            total: totalItems,
+            message: `Spawning nodes (${Math.min(i + BATCH_SIZE, allNodes.length)}/${allNodes.length})...`,
+          });
+          await waitForFrame();
         }
-        if (event.payload.edges) {
-          setEdges((prev) => [...prev, ...event.payload.edges]);
+
+        // Spawn edges in batches
+        for (let i = 0; i < allEdges.length; i += BATCH_SIZE) {
+          const batch = allEdges.slice(i, i + BATCH_SIZE);
+          setEdges((prev) => [...prev, ...batch]);
+          spawned += batch.length;
+          emit("generation-progress", {
+            current: spawned,
+            total: totalItems,
+            message: `Spawning edges (${Math.min(i + BATCH_SIZE, allEdges.length)}/${allEdges.length})...`,
+          });
+          await waitForFrame();
         }
+
+        // All items spawned — close the generating window
+        invoke("close_window", { label: "generating" });
       },
     );
 
