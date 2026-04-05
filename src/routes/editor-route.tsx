@@ -46,10 +46,8 @@ const EditorRoute = () => {
   );
   const { setHandlers, setState } = useEditorActions();
 
-  const [allowClose, setAllowClose] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  const allowCloseRef = useRef(allowClose);
   const projectEditedRef = useRef(projectEdited);
   const closeUnlistenRef = useRef<(() => void) | null>(null);
 
@@ -372,10 +370,6 @@ const EditorRoute = () => {
   }, [copyNodes, cutNodes, pasteNodes, selectAllNodes, setHandlers]);
 
   useEffect(() => {
-    allowCloseRef.current = allowClose;
-  }, [allowClose]);
-
-  useEffect(() => {
     projectEditedRef.current = projectEdited;
   }, [projectEdited]);
 
@@ -384,20 +378,10 @@ const EditorRoute = () => {
 
     appWindow
       .onCloseRequested((event) => {
-        if (allowCloseRef.current) {
-          return;
-        }
-
         if (projectEditedRef.current) {
           event.preventDefault();
           setShowDiscardDialog(true);
-          return;
         }
-
-        event.preventDefault();
-        allowCloseRef.current = true;
-        setAllowClose(true);
-        appWindow.close();
       })
       .then((dispose) => {
         if (cancelled) {
@@ -412,7 +396,7 @@ const EditorRoute = () => {
       closeUnlistenRef.current?.();
       closeUnlistenRef.current = null;
     };
-  }, [setAllowClose, setShowDiscardDialog]);
+  }, [setShowDiscardDialog]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -559,15 +543,9 @@ const EditorRoute = () => {
 
   const handleDiscardConfirm = useCallback(async () => {
     setShowDiscardDialog(false);
-    allowCloseRef.current = true;
-    projectEditedRef.current = false;
-    closeUnlistenRef.current?.();
-    closeUnlistenRef.current = null;
-    setAllowClose(true);
     setProjectEdited(false);
-    await new Promise((resolve) => setTimeout(resolve, 0));
     await appWindow.close();
-  }, [setAllowClose, setProjectEdited, setShowDiscardDialog]);
+  }, [setProjectEdited, setShowDiscardDialog]);
 
   return (
     <>
