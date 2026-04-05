@@ -24,7 +24,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TooltipProvider>
       <EditorActionsProvider>
-        <div className="h-dvh flex flex-col font-manrope">
+        <div className="h-dvh flex flex-col font-manrope overflow-hidden">
           <HashRouter>
             <Routes>
               <Route index element={<WelcomeRoute />} />
