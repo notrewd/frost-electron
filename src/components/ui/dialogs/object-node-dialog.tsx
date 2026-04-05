@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, useRef, useCallback } from "react";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -14,6 +14,7 @@ import { Button } from "../button";
 import useFlowStore from "@/stores/flow-store";
 import UnsavedChangesDialog from "./unsaved-changes-dialog";
 import { Separator } from "../separator";
+import { useMotionValue, useSpring, motion } from "framer-motion";
 
 interface ObjectNodeDialogProps {
   id: string;
@@ -37,6 +38,53 @@ const ObjectNodeDialog: FC<ObjectNodeDialogProps> = ({
       setInternalData(data);
     }
   }, [open, data]);
+
+  const [activeTab, setActiveTab] = useState("general");
+
+  // --- Animated height ---
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const height = useMotionValue(0);
+  const animatedHeight = useSpring(height, {
+    stiffness: 500,
+    damping: 40,
+    mass: 0.5,
+  });
+  const [ready, setReady] = useState(false);
+
+  const contentCallbackRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      // Clean up old observer.
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+
+      contentRef.current = node;
+
+      if (!node) {
+        setReady(false);
+        return;
+      }
+
+      // Set the initial height instantly (no spring animation).
+      height.jump(node.offsetHeight);
+      setReady(true);
+
+      // Observe future size changes.
+      observerRef.current = new ResizeObserver(([entry]) => {
+        height.set(entry.contentRect.height);
+      });
+      observerRef.current.observe(node);
+    },
+    [height],
+  );
+
+  useEffect(() => {
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, []);
 
   const hasChanges = JSON.stringify(internalData) !== JSON.stringify(data);
 
@@ -67,7 +115,7 @@ const ObjectNodeDialog: FC<ObjectNodeDialogProps> = ({
 
   return (
     <>
-      <Tabs defaultValue="general">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ResponsiveDialog
           open={open}
           onOpenChange={handleOpenChange}
@@ -87,11 +135,19 @@ const ObjectNodeDialog: FC<ObjectNodeDialogProps> = ({
             </TabsList>
           </ResponsiveDialogHeader>
           <ResponsiveDialogContent>
-            <div className="flex flex-col pb-2 gap-4">
-              <GeneralTab data={internalData} setData={setInternalData} />
-              <AttributesTab data={internalData} setData={setInternalData} />
-              <MethodsTab data={internalData} setData={setInternalData} />
-            </div>
+            <motion.div
+              style={{ height: ready ? animatedHeight : "auto" }}
+              className="overflow-hidden"
+            >
+              <div ref={contentCallbackRef} className="flex flex-col pb-2 gap-4">
+                <GeneralTab data={internalData} setData={setInternalData} />
+                <AttributesTab
+                  data={internalData}
+                  setData={setInternalData}
+                />
+                <MethodsTab data={internalData} setData={setInternalData} />
+              </div>
+            </motion.div>
           </ResponsiveDialogContent>
           <div className="flex flex-col gap-2 px-4">
             <Separator />
