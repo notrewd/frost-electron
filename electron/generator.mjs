@@ -20,6 +20,34 @@ function uuid() {
  * @typedef {{ name: string, isInterface: boolean, extends: string[], implements: string[], fields: UmlField[], methods: UmlMethod[], path: string, groupId: string|null }} UmlClass
  */
 
+// ─── Modifier Stripping ──────────────────────────────────────────────────────
+
+const MODIFIER_KEYWORDS = new Set([
+  // Java
+  "public", "private", "protected",
+  "static", "final", "abstract",
+  "volatile", "transient", "synchronized",
+  "native", "strictfp", "default",
+  // C++ / general OOP
+  "virtual", "override", "const", "inline",
+  "explicit", "extern", "mutable",
+  "constexpr", "consteval", "constinit",
+  // Common annotation names (bare, without @) as a fallback
+  "Override", "Deprecated", "SuppressWarnings",
+  "NotNull", "Nullable", "Nonnull",
+]);
+
+function stripModifiers(typeStr) {
+  if (!typeStr) return typeStr;
+  // Remove annotations like @Override, @NotNull, etc.
+  const noAnnotations = typeStr.replace(/@\w+\s*/g, "");
+  return noAnnotations
+    .split(/\s+/)
+    .filter((word) => !MODIFIER_KEYWORDS.has(word))
+    .join(" ")
+    .trim();
+}
+
 // ─── Language Detection ───────────────────────────────────────────────────────
 
 const LANG_MAP = {
@@ -42,10 +70,11 @@ function getLanguageForFile(filePath) {
 
 function parseJava(source) {
   const classes = [];
-  // Remove comments
+  // Remove comments, then annotations (e.g. @Override, @SuppressWarnings(...))
   const cleaned = source
     .replace(/\/\/.*$/gm, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "");
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/@\w+(?:\s*\([^)]*\))?\s*/g, "");
 
   // Match class and interface declarations
   const classRegex =
@@ -113,7 +142,7 @@ function parseJavaBody(body, cls) {
       ["class", "interface", "return", "import", "package", "new", "throw"].includes(name)
     )
       continue;
-    cls.fields.push({ name, fieldType: type, accessModifier: access });
+    cls.fields.push({ name, fieldType: stripModifiers(type), accessModifier: access });
   }
 
   // Parse methods: access_modifier [static] returnType name(params)
@@ -137,7 +166,7 @@ function parseJavaBody(body, cls) {
 
     cls.methods.push({
       name,
-      returnType: isConstructor ? cls.name : returnType,
+      returnType: isConstructor ? cls.name : stripModifiers(returnType),
       accessModifier: access,
       isStatic: isConstructor ? true : isStatic,
       parameters,
@@ -159,7 +188,7 @@ function parseJavaParams(paramsStr) {
     if (lastSpace > 0) {
       const type = cleaned.substring(0, lastSpace).trim();
       const name = cleaned.substring(lastSpace + 1).trim();
-      params.push({ name, fieldType: type, accessModifier: "" });
+      params.push({ name, fieldType: stripModifiers(type), accessModifier: "" });
     }
   }
   return params;

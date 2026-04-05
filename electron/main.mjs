@@ -268,7 +268,6 @@ function openNewProjectWindow() {
     minWidth: 400,
     minHeight: 600,
     title: "Create new project",
-    alwaysOnTop: true,
     minimizable: false,
     maximizable: false,
   });
@@ -339,7 +338,6 @@ function openEdgesOutlinerWindow() {
     minWidth: 700,
     minHeight: 600,
     title: "Edges Outliner",
-    alwaysOnTop: true,
   });
 }
 
@@ -350,7 +348,6 @@ function openHistoryWindow() {
     minWidth: 400,
     minHeight: 500,
     title: "History",
-    alwaysOnTop: true,
   });
 }
 
@@ -375,7 +372,6 @@ function openGeneratingWindow() {
     maximizable: false,
     minimizable: false,
     resizable: false,
-    alwaysOnTop: true,
   });
 }
 

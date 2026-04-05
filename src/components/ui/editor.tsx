@@ -678,8 +678,11 @@ const FlowEditor = () => {
               const id = node.getAttribute("data-id");
               if (id && !finalNodeIds.includes(id)) return false;
             }
-            if (node?.classList?.contains("react-flow__edge")) {
-              const id = node.getAttribute("data-id");
+            if (
+              node?.tagName?.toUpperCase() === "SVG" &&
+              node.firstElementChild?.classList?.contains("react-flow__edge")
+            ) {
+              const id = node.firstElementChild.getAttribute("data-id");
               if (id && !validEdgeIds.includes(id)) return false;
             }
             if (node?.hasAttribute?.("data-suggestion-button")) {
