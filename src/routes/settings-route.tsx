@@ -20,6 +20,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import ObjectNodesSettings from "@/components/settings/object-nodes";
+import SuggestionsSettings from "@/components/settings/suggestions";
 import { cn } from "@/lib/utils";
 import { invoke } from "@/lib/electron/invoke";
 import { type } from "@/lib/electron/os";
@@ -30,6 +31,7 @@ import {
   TvMinimal,
   Workflow,
   Spline,
+  Lightbulb,
 } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 import DiscardDialog from "@/components/ui/dialogs/discard-dialog";
@@ -104,6 +106,25 @@ const categories: Category[] = [
       "Straight",
       "Smooth Step",
       "Bezier",
+    ],
+  },
+  {
+    id: "suggestions",
+    title: "Suggestions",
+    description: "Configure intelligent suggestions and warnings for nodes.",
+    icon: Lightbulb,
+    keywords: [
+      "Suggestions",
+      "Warnings",
+      "Encapsulation",
+      "Naming Convention",
+      "God Class",
+      "Empty Class",
+      "Missing Return Type",
+      "Mutable Getter",
+      "Missing Constructor",
+      "Abstract",
+      "Parameters",
     ],
   },
 ];
@@ -218,6 +239,17 @@ const SettingsRoute = () => {
           nodeBorderRadius: initialSettings.node_border_radius,
 
           showEdgeLabels: initialSettings.show_edge_labels,
+          suggestionsEnabled: initialSettings.suggestions_enabled,
+          suggestionEncapsulationViolation: initialSettings.suggestion_encapsulation_violation,
+          suggestionNamingConventionClass: initialSettings.suggestion_naming_convention_class,
+          suggestionNamingConventionMembers: initialSettings.suggestion_naming_convention_members,
+          suggestionGodClass: initialSettings.suggestion_god_class,
+          suggestionEmptyClass: initialSettings.suggestion_empty_class,
+          suggestionMissingReturnType: initialSettings.suggestion_missing_return_type,
+          suggestionMutableGetterExposure: initialSettings.suggestion_mutable_getter_exposure,
+          suggestionMissingConstructor: initialSettings.suggestion_missing_constructor,
+          suggestionUnusedAbstract: initialSettings.suggestion_unused_abstract,
+          suggestionTooManyParameters: initialSettings.suggestion_too_many_parameters,
         });
       }
 
@@ -364,6 +396,12 @@ const SettingsRoute = () => {
             )}
             {selectedCategory.id === "object-nodes" && (
               <ObjectNodesSettings
+                onChange={() => setChanged(true)}
+                searchQuery={searchQuery}
+              />
+            )}
+            {selectedCategory.id === "suggestions" && (
+              <SuggestionsSettings
                 onChange={() => setChanged(true)}
                 searchQuery={searchQuery}
               />

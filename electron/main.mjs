@@ -74,6 +74,17 @@ const defaultSettings = {
   object_node_parameter_name_color_dark: "#fb923c",
   node_border_radius: 8,
   show_edge_labels: true,
+  suggestions_enabled: true,
+  suggestion_encapsulation_violation: true,
+  suggestion_naming_convention_class: true,
+  suggestion_naming_convention_members: true,
+  suggestion_god_class: true,
+  suggestion_empty_class: true,
+  suggestion_missing_return_type: true,
+  suggestion_mutable_getter_exposure: true,
+  suggestion_missing_constructor: true,
+  suggestion_unused_abstract: true,
+  suggestion_too_many_parameters: true,
 };
 
 let settings = { ...defaultSettings };
@@ -861,6 +872,17 @@ function setupIPC() {
         settings.object_node_parameter_name_color_dark,
       nodeBorderRadius: settings.node_border_radius,
       showEdgeLabels: settings.show_edge_labels,
+      suggestionsEnabled: settings.suggestions_enabled,
+      suggestionEncapsulationViolation: settings.suggestion_encapsulation_violation,
+      suggestionNamingConventionClass: settings.suggestion_naming_convention_class,
+      suggestionNamingConventionMembers: settings.suggestion_naming_convention_members,
+      suggestionGodClass: settings.suggestion_god_class,
+      suggestionEmptyClass: settings.suggestion_empty_class,
+      suggestionMissingReturnType: settings.suggestion_missing_return_type,
+      suggestionMutableGetterExposure: settings.suggestion_mutable_getter_exposure,
+      suggestionMissingConstructor: settings.suggestion_missing_constructor,
+      suggestionUnusedAbstract: settings.suggestion_unused_abstract,
+      suggestionTooManyParameters: settings.suggestion_too_many_parameters,
     });
   });
 

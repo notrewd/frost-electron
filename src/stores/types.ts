@@ -64,6 +64,19 @@ export interface SettingsState {
   node_border_radius: number;
   show_edge_labels: boolean;
 
+  // Suggestions
+  suggestions_enabled: boolean;
+  suggestion_encapsulation_violation: boolean;
+  suggestion_naming_convention_class: boolean;
+  suggestion_naming_convention_members: boolean;
+  suggestion_god_class: boolean;
+  suggestion_empty_class: boolean;
+  suggestion_missing_return_type: boolean;
+  suggestion_mutable_getter_exposure: boolean;
+  suggestion_missing_constructor: boolean;
+  suggestion_unused_abstract: boolean;
+  suggestion_too_many_parameters: boolean;
+
   setTheme: (theme: "light" | "dark" | "system") => void;
   setPanOnScroll: (enabled: boolean) => void;
   setShowMinimap: (enabled: boolean) => void;
@@ -83,4 +96,15 @@ export interface SettingsState {
   setCompactNodes: (compact: boolean) => void;
   setNodeBorderRadius: (radius: number) => void;
   setShowEdgeLabels: (show: boolean) => void;
+  setSuggestionsEnabled: (enabled: boolean) => void;
+  setSuggestionEncapsulationViolation: (enabled: boolean) => void;
+  setSuggestionNamingConventionClass: (enabled: boolean) => void;
+  setSuggestionNamingConventionMembers: (enabled: boolean) => void;
+  setSuggestionGodClass: (enabled: boolean) => void;
+  setSuggestionEmptyClass: (enabled: boolean) => void;
+  setSuggestionMissingReturnType: (enabled: boolean) => void;
+  setSuggestionMutableGetterExposure: (enabled: boolean) => void;
+  setSuggestionMissingConstructor: (enabled: boolean) => void;
+  setSuggestionUnusedAbstract: (enabled: boolean) => void;
+  setSuggestionTooManyParameters: (enabled: boolean) => void;
 }

@@ -527,6 +527,9 @@ const FlowEditor = () => {
             ) {
               return false;
             }
+            if (node?.hasAttribute?.("data-suggestion-button")) {
+              return false;
+            }
             if (
               node?.classList &&
               typeof node.classList.remove === "function"
@@ -678,6 +681,9 @@ const FlowEditor = () => {
             if (node?.classList?.contains("react-flow__edge")) {
               const id = node.getAttribute("data-id");
               if (id && !validEdgeIds.includes(id)) return false;
+            }
+            if (node?.hasAttribute?.("data-suggestion-button")) {
+              return false;
             }
             if (
               node?.classList &&

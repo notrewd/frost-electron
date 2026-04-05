@@ -30,6 +30,18 @@ export const useSettingsStore = create<SettingsState>(() => ({
   node_border_radius: 8,
   show_edge_labels: true,
 
+  suggestions_enabled: true,
+  suggestion_encapsulation_violation: true,
+  suggestion_naming_convention_class: true,
+  suggestion_naming_convention_members: true,
+  suggestion_god_class: true,
+  suggestion_empty_class: true,
+  suggestion_missing_return_type: true,
+  suggestion_mutable_getter_exposure: true,
+  suggestion_missing_constructor: true,
+  suggestion_unused_abstract: true,
+  suggestion_too_many_parameters: true,
+
   setTheme: (theme) => {
     invoke("set_settings_state", { theme });
   },
@@ -84,6 +96,28 @@ export const useSettingsStore = create<SettingsState>(() => ({
     invoke("set_settings_state", { nodeBorderRadius: radius }),
   setShowEdgeLabels: (show: boolean) =>
     invoke("set_settings_state", { showEdgeLabels: show }),
+  setSuggestionsEnabled: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionsEnabled: enabled }),
+  setSuggestionEncapsulationViolation: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionEncapsulationViolation: enabled }),
+  setSuggestionNamingConventionClass: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionNamingConventionClass: enabled }),
+  setSuggestionNamingConventionMembers: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionNamingConventionMembers: enabled }),
+  setSuggestionGodClass: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionGodClass: enabled }),
+  setSuggestionEmptyClass: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionEmptyClass: enabled }),
+  setSuggestionMissingReturnType: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionMissingReturnType: enabled }),
+  setSuggestionMutableGetterExposure: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionMutableGetterExposure: enabled }),
+  setSuggestionMissingConstructor: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionMissingConstructor: enabled }),
+  setSuggestionUnusedAbstract: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionUnusedAbstract: enabled }),
+  setSuggestionTooManyParameters: (enabled: boolean) =>
+    invoke("set_settings_state", { suggestionTooManyParameters: enabled }),
 }));
 
 const fetchSettings = async () => {
@@ -122,6 +156,17 @@ const fetchSettings = async () => {
     compact_nodes: settings.compact_nodes,
     node_border_radius: settings.node_border_radius,
     show_edge_labels: settings.show_edge_labels,
+    suggestions_enabled: settings.suggestions_enabled,
+    suggestion_encapsulation_violation: settings.suggestion_encapsulation_violation,
+    suggestion_naming_convention_class: settings.suggestion_naming_convention_class,
+    suggestion_naming_convention_members: settings.suggestion_naming_convention_members,
+    suggestion_god_class: settings.suggestion_god_class,
+    suggestion_empty_class: settings.suggestion_empty_class,
+    suggestion_missing_return_type: settings.suggestion_missing_return_type,
+    suggestion_mutable_getter_exposure: settings.suggestion_mutable_getter_exposure,
+    suggestion_missing_constructor: settings.suggestion_missing_constructor,
+    suggestion_unused_abstract: settings.suggestion_unused_abstract,
+    suggestion_too_many_parameters: settings.suggestion_too_many_parameters,
   });
 
   setTheme(settings.theme);
@@ -164,6 +209,17 @@ const subscribeToSettingsUpdates = () => {
       compact_nodes: settings.compactNodes,
       node_border_radius: settings.nodeBorderRadius,
       show_edge_labels: settings.showEdgeLabels,
+      suggestions_enabled: settings.suggestionsEnabled,
+      suggestion_encapsulation_violation: settings.suggestionEncapsulationViolation,
+      suggestion_naming_convention_class: settings.suggestionNamingConventionClass,
+      suggestion_naming_convention_members: settings.suggestionNamingConventionMembers,
+      suggestion_god_class: settings.suggestionGodClass,
+      suggestion_empty_class: settings.suggestionEmptyClass,
+      suggestion_missing_return_type: settings.suggestionMissingReturnType,
+      suggestion_mutable_getter_exposure: settings.suggestionMutableGetterExposure,
+      suggestion_missing_constructor: settings.suggestionMissingConstructor,
+      suggestion_unused_abstract: settings.suggestionUnusedAbstract,
+      suggestion_too_many_parameters: settings.suggestionTooManyParameters,
     });
 
     setTheme(settings.theme);

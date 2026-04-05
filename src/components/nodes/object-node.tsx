@@ -2,11 +2,18 @@ import { FC, useState, useEffect, useMemo } from "react";
 import { useUpdateNodeInternals } from "@xyflow/react";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { ChevronsLeft, ChevronsRight, Edit2 } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Edit2, Lightbulb, AlertTriangle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ObjectNodeDialog from "../ui/dialogs/object-node-dialog";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useShallow } from "zustand/react/shallow";
+import { analyzeObjectNode, NodeSuggestion } from "@/lib/node-suggestions";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+import { ScrollArea } from "../ui/scroll-area";
 import { ContextMenuItem, ContextMenuSeparator } from "../ui/context-menu";
 import NodeContextMenu, {
   NodeContextMenuContent,
@@ -59,6 +66,27 @@ interface ObjectNodeProps {
   selected: boolean;
 }
 
+const SuggestionItem: FC<{ suggestion: NodeSuggestion }> = ({ suggestion }) => (
+  <div className="border-b last:border-b-0 px-3 py-2 flex flex-col gap-1">
+    <div className="flex items-center gap-1.5">
+      {suggestion.severity === "warning" ? (
+        <AlertTriangle className="size-3 shrink-0 text-amber-500" />
+      ) : (
+        <Info className="size-3 shrink-0 text-blue-500" />
+      )}
+      <span className="font-medium">{suggestion.title}</span>
+    </div>
+    <p className="text-muted-foreground whitespace-pre-line pl-[18px]">
+      {suggestion.details}
+    </p>
+    {suggestion.fix && (
+      <p className="text-muted-foreground pl-[18px] italic">
+        {suggestion.fix}
+      </p>
+    )}
+  </div>
+);
+
 const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
   const updateNodeInternals = useUpdateNodeInternals();
   useEffect(() => {
@@ -82,6 +110,17 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
     defaultValueColorDark,
     parameterColorLight,
     parameterColorDark,
+    suggestionsEnabled,
+    sgEncapsulation,
+    sgNamingClass,
+    sgNamingMembers,
+    sgGodClass,
+    sgEmptyClass,
+    sgMissingReturn,
+    sgMutableGetter,
+    sgMissingCtor,
+    sgUnusedAbstract,
+    sgTooManyParams,
   } = useSettingsStore(
     useShallow((state) => ({
       coloredNodes: state.colored_nodes,
@@ -98,8 +137,36 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
       defaultValueColorDark: state.object_node_default_value_color_dark,
       parameterColorLight: state.object_node_parameter_name_color_light,
       parameterColorDark: state.object_node_parameter_name_color_dark,
+      suggestionsEnabled: state.suggestions_enabled,
+      sgEncapsulation: state.suggestion_encapsulation_violation,
+      sgNamingClass: state.suggestion_naming_convention_class,
+      sgNamingMembers: state.suggestion_naming_convention_members,
+      sgGodClass: state.suggestion_god_class,
+      sgEmptyClass: state.suggestion_empty_class,
+      sgMissingReturn: state.suggestion_missing_return_type,
+      sgMutableGetter: state.suggestion_mutable_getter_exposure,
+      sgMissingCtor: state.suggestion_missing_constructor,
+      sgUnusedAbstract: state.suggestion_unused_abstract,
+      sgTooManyParams: state.suggestion_too_many_parameters,
     })),
   );
+
+  const suggestionSettings = useMemo(() => ({
+    encapsulation_violation: sgEncapsulation,
+    naming_convention_class: sgNamingClass,
+    naming_convention_members: sgNamingMembers,
+    god_class: sgGodClass,
+    empty_class: sgEmptyClass,
+    missing_return_type: sgMissingReturn,
+    mutable_getter_exposure: sgMutableGetter,
+    missing_constructor: sgMissingCtor,
+    unused_abstract: sgUnusedAbstract,
+    too_many_parameters: sgTooManyParams,
+  }), [
+    sgEncapsulation, sgNamingClass, sgNamingMembers, sgGodClass,
+    sgEmptyClass, sgMissingReturn, sgMutableGetter, sgMissingCtor,
+    sgUnusedAbstract, sgTooManyParams,
+  ]);
 
   const isDark = useMemo(
     () =>
@@ -151,6 +218,16 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
     [coloredNodes, isDark, parameterColorDark, parameterColorLight],
   );
 
+  const suggestions = useMemo(
+    () => suggestionsEnabled ? analyzeObjectNode(data, suggestionSettings) : [],
+    [data, suggestionSettings, suggestionsEnabled],
+  );
+
+  const warningCount = useMemo(
+    () => suggestions.filter((s) => s.severity === "warning").length,
+    [suggestions],
+  );
+
   const displayedAttributes = useMemo(() => {
     if (!data.attributes) return [];
     if (data.viewType === "external") {
@@ -184,6 +261,40 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
             onDoubleClick={() => setDialogOpen(true)}
           >
             <NodeSelectionRing visible={selected} />
+            {suggestions.length > 0 && (
+              <HoverCard openDelay={200} closeDelay={100}>
+                <HoverCardTrigger asChild>
+                  <button
+                    data-suggestion-button
+                    className={cn(
+                      "absolute top-1.5 right-1.5 z-10 flex items-center justify-center rounded-full p-0.5 transition-colors",
+                      warningCount > 0
+                        ? "text-amber-500 hover:bg-amber-500/15"
+                        : "text-blue-500 hover:bg-blue-500/15",
+                    )}
+                  >
+                    <Lightbulb className={cn(compactNodes ? "size-3" : "size-3.5")} />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent
+                  side="right"
+                  align="start"
+                  className="w-80 p-0 font-sans text-xs"
+                >
+                  <div className="flex items-center gap-2 border-b px-3 py-2">
+                    <Lightbulb className="size-3.5 text-muted-foreground" />
+                    <span className="font-medium text-sm">
+                      {suggestions.length} suggestion{suggestions.length !== 1 && "s"}
+                    </span>
+                  </div>
+                  <ScrollArea viewportClassName="max-h-64">
+                    {suggestions.map((s) => (
+                      <SuggestionItem key={s.id} suggestion={s} />
+                    ))}
+                  </ScrollArea>
+                </HoverCardContent>
+              </HoverCard>
+            )}
             {data.stereotype && (
               <div
                 className={cn(
@@ -202,7 +313,7 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
             )}
             <p
               className={cn(
-                "px-4 w-full text-center font-semibold",
+                "px-8 w-full text-center font-semibold",
                 compactNodes ? "text-sm" : "text-base",
                 data.abstract && "italic",
               )}
