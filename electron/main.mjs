@@ -669,7 +669,10 @@ function setupIPC() {
     if (!result.canceled && result.filePaths.length > 0) {
       const filePath = result.filePaths[0];
       await openProjectFromPath(filePath);
+      return true;
     }
+
+    return false;
   });
 
   ipcMain.handle("open_project_path", async (_e, { path: filePath }) => {

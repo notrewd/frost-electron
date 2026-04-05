@@ -386,10 +386,13 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
   return (
     <>
       <div
-        data-tauri-drag-region
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
         className="h-8 shrink-0 bg-secondary backdrop-blur-md border-b border-border/50 flex items-center justify-between px-4 select-none w-full sticky top-0 z-10"
       >
-        <div className="flex items-center gap-2">
+        <div
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className="flex items-center gap-2"
+        >
           {(variant === "default" || variant === "dialog") && (
             <div className="flex items-center gap-2 pointer-events-none">
               <img src={FrostIcon} alt="Application Icon" className="size-4" />
@@ -537,7 +540,10 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className="flex items-center gap-2"
+        >
           {variant !== "dialog" && (
             <>
               <Button

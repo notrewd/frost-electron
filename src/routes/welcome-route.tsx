@@ -39,7 +39,8 @@ const WelcomeRoute = () => {
 
   const handleOpenProject = useCallback(async () => {
     try {
-      await invoke("open_project_file");
+      const opened = await invoke("open_project_file");
+      if (!opened) return;
     } catch (error) {
       console.error("Failed to open project file:", error);
       return;
