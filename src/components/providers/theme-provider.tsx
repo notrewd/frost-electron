@@ -1,6 +1,6 @@
 import { useSettingsStore } from "@/stores/settings-store";
 import { SettingsUpdatedEvent } from "@/types/events";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/electron/events";
 import {
   createContext,
   ReactNode,

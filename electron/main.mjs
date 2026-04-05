@@ -238,7 +238,7 @@ function openEditorWindow(projectName, projectPath, projectData) {
   // Emit project-opened to the editor window
   const editor = windows["editor"];
   if (editor) {
-    editor.webContents.send("tauri-event", "project-opened", {
+    editor.webContents.send("app-event", "project-opened", {
       name: projectDetails.name || "",
       path: projectDetails.path || "",
       data: projectData || null,
@@ -306,7 +306,7 @@ function openGenerateWindow() {
 function broadcastEvent(eventName, payload) {
   for (const win of Object.values(windows)) {
     if (!win.isDestroyed()) {
-      win.webContents.send("tauri-event", eventName, payload);
+      win.webContents.send("app-event", eventName, payload);
     }
   }
 }
@@ -314,7 +314,7 @@ function broadcastEvent(eventName, payload) {
 function sendToWindow(label, eventName, payload) {
   const win = windows[label];
   if (win && !win.isDestroyed()) {
-    win.webContents.send("tauri-event", eventName, payload);
+    win.webContents.send("app-event", eventName, payload);
   }
 }
 
@@ -827,7 +827,7 @@ function setupIPC() {
     win.on("close", (event) => {
       if (!win._forceClose) {
         event.preventDefault();
-        win.webContents.send("tauri-event", "close-requested", null);
+        win.webContents.send("app-event", "close-requested", null);
       }
     });
   });

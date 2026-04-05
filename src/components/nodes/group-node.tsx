@@ -13,7 +13,7 @@ import {
 } from "../ui/context-menu";
 import useFlowStore from "@/stores/flow-store";
 import { Card } from "../ui/card";
-import { emit } from "@tauri-apps/api/event";
+import { emit } from "@/lib/electron/events";
 
 export interface GroupNodeData extends Record<string, unknown> {
   name: string;

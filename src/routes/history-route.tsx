@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@/lib/electron/events";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";

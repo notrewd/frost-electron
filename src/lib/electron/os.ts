@@ -1,9 +1,4 @@
-/**
- * Drop-in replacement for @tauri-apps/plugin-os
- *
- * Tauri's type() is synchronous. We cache the OS type at init time
- * and return it synchronously to match the original API.
- */
+import "./types";
 
 let cachedOsType: string = "unknown";
 let initialized = false;
@@ -17,7 +12,6 @@ function ensureInit() {
   }
 }
 
-// Try to initialize eagerly
 try {
   ensureInit();
 } catch {

@@ -13,7 +13,7 @@ import {
   User,
   Component,
 } from "lucide-react";
-import { emit } from "@tauri-apps/api/event";
+import { emit } from "@/lib/electron/events";
 import TreeView, {
   TreeViewItem,
   TreeViewMenuItemsByType,

@@ -2,13 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@tauri-apps/api/core": ["./src/lib/electron-adapter/core.ts"],
-      "@tauri-apps/api/event": ["./src/lib/electron-adapter/event.ts"],
-      "@tauri-apps/api/window": ["./src/lib/electron-adapter/window.ts"],
-      "@tauri-apps/plugin-dialog": ["./src/lib/electron-adapter/plugin-dialog.ts"],
-      "@tauri-apps/plugin-os": ["./src/lib/electron-adapter/plugin-os.ts"],
-      "@tauri-apps/plugin-opener": ["./src/lib/electron-adapter/plugin-opener.ts"]
+      "@/*": ["./src/*"]
     },
 
     "target": "ES2020",

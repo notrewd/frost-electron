@@ -1,5 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/electron/invoke";
+import { listen } from "@/lib/electron/events";
 import { create } from "zustand";
 import { ProjectState } from "./types";
 

@@ -1,7 +1,7 @@
-import { type } from "@tauri-apps/plugin-os";
+import { type } from "@/lib/electron/os";
 import FrostIcon from "@/assets/graphics/app/frost.svg";
 import { FC, useCallback, useEffect, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@/lib/electron/window";
 import { Button } from "@/components/ui/button.tsx";
 import {
   Minus,
@@ -25,6 +25,8 @@ import {
   AlignVerticalDistributeCenter,
   AlignHorizontalDistributeCenter,
   Home,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   Menubar,
@@ -36,9 +38,9 @@ import {
   MenubarTrigger,
 } from "./menubar";
 import { Separator } from "./separator";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/electron/invoke";
 import { useEditorActions } from "../providers/editor-actions-provider";
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@/lib/electron/events";
 import { ProjectOpenedEvent } from "@/types/events";
 import { useProjectStore } from "@/stores/project-store";
 import DiscardDialog from "./dialogs/discard-dialog";
@@ -513,9 +515,11 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
                   <MenubarTrigger>Transform</MenubarTrigger>
                   <MenubarContent>
                     <MenubarItem onClick={handleToExternalView}>
+                      <Eye className="size-4" />
                       To External View
                     </MenubarItem>
                     <MenubarItem onClick={handleToInternalView}>
+                      <EyeOff className="size-4" />
                       To Internal View
                     </MenubarItem>
                   </MenubarContent>

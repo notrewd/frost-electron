@@ -7,7 +7,7 @@ import {
 } from "../context-menu";
 import { Focus, FolderPlus, Trash2, Ungroup, Download } from "lucide-react";
 import useFlowStore from "@/stores/flow-store";
-import { emit } from "@tauri-apps/api/event";
+import { emit } from "@/lib/electron/events";
 
 interface NodeContextMenuProps {
   children?: ReactNode;

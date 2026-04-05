@@ -13,9 +13,9 @@ import {
 import {useShallow} from "zustand/react/shallow";
 import ObjectNode from "../nodes/object-node";
 import {ProjectOpenedEvent} from "@/types/events";
-import {emit, listen} from "@tauri-apps/api/event";
+import {emit, listen} from "@/lib/electron/events";
 import {useCallback, useEffect, useMemo, useState} from "react";
-import {invoke} from "@tauri-apps/api/core";
+import {invoke} from "@/lib/electron/invoke";
 import {toPng} from "html-to-image";
 import {useStore} from "zustand";
 import {Button} from "./button";

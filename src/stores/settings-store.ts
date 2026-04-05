@@ -1,7 +1,7 @@
 import { create } from "zustand/react";
 import { SettingsState } from "./types";
-import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@/lib/electron/events";
+import { invoke } from "@/lib/electron/invoke";
 import { setTheme } from "@/managers/theme-manager";
 
 export const useSettingsStore = create<SettingsState>(() => ({

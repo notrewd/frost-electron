@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { emit, listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@/lib/electron/events";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import SettingsField from "@/components/ui/settings-field";
 import { Switch } from "@/components/ui/switch";
 import { Download, Loader2 } from "lucide-react";
 import { NumberInput } from "@/components/ui/number-input";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/electron/invoke";
 import { HexColorPicker } from "react-colorful";
 import {
   Popover,

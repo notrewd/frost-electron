@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { emit } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/electron/invoke";
+import { getCurrentWindow } from "@/lib/electron/window";
+import { emit } from "@/lib/electron/events";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "@/lib/electron/dialog";
 
 const appWindow = getCurrentWindow();
 

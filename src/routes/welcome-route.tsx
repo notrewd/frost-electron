@@ -8,7 +8,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable.tsx";
 import { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/electron/invoke";
 import { RecentProject } from "@/types/app";
 import RecentProjectsList from "@/components/ui/lists/recent-projects-list";
 import { Badge } from "@/components/ui/badge";

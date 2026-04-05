@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button.tsx";
 import PathInput from "@/components/ui/inputs/path-input.tsx";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/electron/invoke";
 import { convertProjectNameToFileName } from "@/lib/utils";
 
 const formSchema = z.object({

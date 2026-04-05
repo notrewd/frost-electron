@@ -9,7 +9,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "../empty";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/electron/invoke";
 import { ScrollArea, ScrollBar } from "../scroll-area";
 
 interface RecentProjectsListProps {

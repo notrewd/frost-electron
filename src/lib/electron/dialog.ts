@@ -1,6 +1,4 @@
-/**
- * Drop-in replacement for @tauri-apps/plugin-dialog
- */
+import "./types";
 
 interface OpenDialogOptions {
   directory?: boolean;

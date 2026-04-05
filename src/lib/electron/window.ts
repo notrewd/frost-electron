@@ -1,12 +1,10 @@
-/**
- * Drop-in replacement for @tauri-apps/api/window
- */
+import "./types";
 
 type CloseRequestedEvent = {
   preventDefault: () => void;
 };
 
-class ElectronWindow {
+class AppWindow {
   private _closeIntercepted = false;
 
   async minimize() {
@@ -19,7 +17,6 @@ class ElectronWindow {
 
   async close() {
     if (this._closeIntercepted) {
-      // If close interception is active, use forceClose to bypass the handler
       await window.electronAPI.window.forceClose();
     } else {
       await window.electronAPI.window.close();
@@ -43,10 +40,8 @@ class ElectronWindow {
   ): Promise<() => void> {
     this._closeIntercepted = true;
 
-    // Register the close interception on main process
     await window.electronAPI.window.onCloseRequested();
 
-    // Listen for close-requested events
     const unlisten = window.electronAPI.on("close-requested", () => {
       let prevented = false;
       callback({
@@ -55,7 +50,6 @@ class ElectronWindow {
         },
       });
 
-      // If not prevented, force close
       if (!prevented) {
         window.electronAPI.window.forceClose();
       }
@@ -68,11 +62,11 @@ class ElectronWindow {
   }
 }
 
-let currentWindow: ElectronWindow | null = null;
+let currentWindow: AppWindow | null = null;
 
-export function getCurrentWindow(): ElectronWindow {
+export function getCurrentWindow(): AppWindow {
   if (!currentWindow) {
-    currentWindow = new ElectronWindow();
+    currentWindow = new AppWindow();
   }
   return currentWindow;
 }

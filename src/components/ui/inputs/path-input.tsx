@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Folder } from "lucide-react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "@/lib/electron/dialog";
 
 interface FileInputProps extends ComponentProps<typeof Input> {
   value?: string;

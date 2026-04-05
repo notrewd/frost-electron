@@ -2,7 +2,7 @@ import { RecentProject } from "@/types/app";
 import { FC, useCallback } from "react";
 import { Button } from "../button";
 import { Ellipsis, Folder, Trash } from "lucide-react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/electron/invoke";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../dropdown-menu";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { revealItemInDir } from "@/lib/electron/shell";
 
 interface RecentProjectItemProps {
   recentProject: RecentProject;

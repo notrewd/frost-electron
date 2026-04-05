@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/sidebar";
 import ObjectNodesSettings from "@/components/settings/object-nodes";
 import { cn } from "@/lib/utils";
-import { invoke } from "@tauri-apps/api/core";
-import { type } from "@tauri-apps/plugin-os";
+import { invoke } from "@/lib/electron/invoke";
+import { type } from "@/lib/electron/os";
 import {
   LucideIcon,
   Save,
@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 import DiscardDialog from "@/components/ui/dialogs/discard-dialog";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@/lib/electron/window";
 
 const appWindow = getCurrentWindow();
 
