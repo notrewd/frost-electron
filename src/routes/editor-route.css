@@ -16,12 +16,6 @@
   outline: none !important;
 }
 
-
-/* Prevent selected group nodes from rendering above edge labels and other nodes */
-.react-flow__node-group.selected {
-  z-index: -1 !important;
-}
-
 /* Ensure edge labels are always rendered above edges and nodes */
 .react-flow__edgelabel-renderer {
   z-index: 2000 !important;

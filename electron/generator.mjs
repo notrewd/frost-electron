@@ -407,7 +407,14 @@ function walkDirectory(dirPath, groups, parentGroup, generateGroups, files) {
           id: groupId,
           type: "group",
           position: { x: 0, y: 0 },
-          data: { name: entry.name },
+          style: {
+            width: 0,
+            height: 0,
+            border: "none",
+            background: "transparent",
+          },
+          zIndex: -1,
+          data: { name: entry.name, color: "#18181b50" },
           parentId: parentGroup || undefined,
         });
         nextParent = groupId;
