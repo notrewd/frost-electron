@@ -6,7 +6,6 @@ import {
 } from "./collapsible";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface PropertiesSectionProps {
   title: string;
@@ -42,21 +41,9 @@ const PropertiesSection: FC<PropertiesSectionProps> = ({
           )}
         />
       </CollapsibleTrigger>
-      <AnimatePresence initial={false}>
-        {open && (
-          <CollapsibleContent forceMount asChild>
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="overflow-hidden"
-            >
-              <div className="flex flex-col pb-2 pt-1">{children}</div>
-            </motion.div>
-          </CollapsibleContent>
-        )}
-      </AnimatePresence>
+      <CollapsibleContent>
+        <div className="flex flex-col pb-2 pt-1">{children}</div>
+      </CollapsibleContent>
     </Collapsible>
   );
 };
