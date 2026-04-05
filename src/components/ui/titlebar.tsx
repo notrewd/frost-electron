@@ -27,6 +27,9 @@ import {
   Home,
   Eye,
   EyeOff,
+  LayoutGrid,
+  Trash2,
+  PanelLeft,
 } from "lucide-react";
 import {
   Menubar,
@@ -44,7 +47,9 @@ import { emit, listen } from "@/lib/electron/events";
 import { ProjectOpenedEvent } from "@/types/events";
 import { useProjectStore } from "@/stores/project-store";
 import DiscardDialog from "./dialogs/discard-dialog";
+import SaveLayoutDialog from "./dialogs/save-layout-dialog";
 import { useShallow } from "zustand/react/shallow";
+import { useLayoutStore, type PanelId, type DockSlot } from "@/stores/layout-store";
 
 const appWindow = getCurrentWindow();
 
@@ -68,6 +73,47 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
     })),
   );
   const { cut, copy, paste, selectAll, state } = useEditorActions();
+
+  const [saveLayoutDialogOpen, setSaveLayoutDialogOpen] = useState(false);
+
+  interface LayoutPreset {
+    name: string;
+    builtin: boolean;
+    positions: Record<PanelId, DockSlot>;
+  }
+
+  const [layoutPresets, setLayoutPresets] = useState<LayoutPreset[]>([]);
+  const { panelPositions, setPositions } = useLayoutStore();
+
+  useEffect(() => {
+    invoke<LayoutPreset[]>("get_layout_presets").then(setLayoutPresets);
+
+    const unlisten = listen<LayoutPreset[]>("layout-presets-updated", (event) => {
+      setLayoutPresets(event.payload);
+    });
+
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
+
+  const handleApplyPreset = useCallback(
+    (positions: Record<PanelId, DockSlot>) => {
+      setPositions(positions);
+    },
+    [setPositions],
+  );
+
+  const handleSaveLayoutPreset = useCallback(
+    async (name: string) => {
+      await invoke("save_layout_preset", { name, positions: panelPositions });
+    },
+    [panelPositions],
+  );
+
+  const handleDeletePreset = useCallback(async (name: string) => {
+    await invoke("delete_layout_preset", { name });
+  }, []);
 
   useEffect(() => {
     const fetchWindowTitle = async () => {
@@ -390,6 +436,11 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
           onChange={setDiscardDialogOpen}
           onConfirm={onConfirmDiscard}
         />
+        <SaveLayoutDialog
+          open={saveLayoutDialogOpen}
+          onChange={setSaveLayoutDialogOpen}
+          onSave={handleSaveLayoutPreset}
+        />
       </>
     );
   }
@@ -550,6 +601,42 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
                   </MenubarContent>
                 </MenubarMenu>
                 <MenubarMenu>
+                  <MenubarTrigger>Layout</MenubarTrigger>
+                  <MenubarContent>
+                    {layoutPresets.map((preset) => (
+                      <MenubarItem
+                        key={preset.name}
+                        onClick={() => handleApplyPreset(preset.positions)}
+                      >
+                        <PanelLeft className="size-4" />
+                        {preset.name}
+                      </MenubarItem>
+                    ))}
+                    <MenubarSeparator />
+                    <MenubarItem onClick={() => setSaveLayoutDialogOpen(true)}>
+                      <LayoutGrid className="size-4" />
+                      Save Current Layout...
+                    </MenubarItem>
+                    {layoutPresets.some((p) => !p.builtin) && (
+                      <>
+                        <MenubarSeparator />
+                        {layoutPresets
+                          .filter((p) => !p.builtin)
+                          .map((preset) => (
+                            <MenubarItem
+                              key={`delete-${preset.name}`}
+                              onClick={() => handleDeletePreset(preset.name)}
+                              variant="destructive"
+                            >
+                              <Trash2 className="size-4" />
+                              Delete "{preset.name}"
+                            </MenubarItem>
+                          ))}
+                      </>
+                    )}
+                  </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
                   <MenubarTrigger>Window</MenubarTrigger>
                   <MenubarContent>
                     <MenubarItem onClick={showWelcomeWindow}>
@@ -597,6 +684,11 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
         open={discardDialogOpen}
         onChange={setDiscardDialogOpen}
         onConfirm={onConfirmDiscard}
+      />
+      <SaveLayoutDialog
+        open={saveLayoutDialogOpen}
+        onChange={setSaveLayoutDialogOpen}
+        onSave={handleSaveLayoutPreset}
       />
     </>
   );

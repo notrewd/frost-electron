@@ -26,8 +26,33 @@ import { useShallow } from "zustand/react/shallow";
 import { FlowState } from "@/stores";
 import useFlowStore from "@/stores/flow-store";
 import FlowEditor from "@/components/ui/editor";
+import {
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+  MouseSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  useLayoutStore,
+  getPanelsForSide,
+  type PanelId,
+  type DockSide,
+  type DockSlot,
+  type DockAction,
+} from "@/stores/layout-store";
+import DockDropZone, { DockReplaceZone } from "@/components/ui/dock-drop-zone";
+import SaveLayoutDialog from "@/components/ui/dialogs/save-layout-dialog";
 
 const appWindow = getCurrentWindow();
+
+const PANEL_LABELS: Record<PanelId, string> = {
+  library: "Library",
+  project: "Project",
+  properties: "Properties",
+};
 
 const EditorRoute = () => {
   const { projectEdited, setProjectEdited, projectPath } = useProjectStore(
@@ -47,6 +72,18 @@ const EditorRoute = () => {
   const { setHandlers, setState } = useEditorActions();
 
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showSaveLayoutDialog, setShowSaveLayoutDialog] = useState(false);
+  const [activeDrag, setActiveDrag] = useState<PanelId | null>(null);
+
+  const { panelPositions, movePanel, setPositions } = useLayoutStore();
+
+  const leftPanels = getPanelsForSide("left", panelPositions);
+  const rightPanels = getPanelsForSide("right", panelPositions);
+
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: { distance: 5 },
+  });
+  const sensors = useSensors(mouseSensor);
 
   const projectEditedRef = useRef(projectEdited);
   const closeUnlistenRef = useRef<(() => void) | null>(null);
@@ -82,7 +119,12 @@ const EditorRoute = () => {
     const saveUnlisten = listen("save-requested", async () => {
       if (!reactFlowInstance) return;
       const flowData = reactFlowInstance.toObject();
-      const serializedData = JSON.stringify(flowData, null, 2);
+      const currentLayout = useLayoutStore.getState().panelPositions;
+      const serializedData = JSON.stringify(
+        { ...flowData, panelLayout: currentLayout },
+        null,
+        2,
+      );
       try {
         await invoke("save_file", { data: serializedData });
         setProjectEdited(false);
@@ -94,7 +136,12 @@ const EditorRoute = () => {
     const saveAsUnlisten = listen("save-as-requested", async () => {
       if (!reactFlowInstance) return;
       const flowData = reactFlowInstance.toObject();
-      const serializedData = JSON.stringify(flowData, null, 2);
+      const currentLayout = useLayoutStore.getState().panelPositions;
+      const serializedData = JSON.stringify(
+        { ...flowData, panelLayout: currentLayout },
+        null,
+        2,
+      );
 
       try {
         await invoke("save_file_as", { data: serializedData });
@@ -165,7 +212,12 @@ const EditorRoute = () => {
         if (!projectEditedRef.current) return;
 
         const flowData = reactFlowInstance.toObject();
-        const serializedData = JSON.stringify(flowData, null, 2);
+        const currentLayout = useLayoutStore.getState().panelPositions;
+        const serializedData = JSON.stringify(
+          { ...flowData, panelLayout: currentLayout },
+          null,
+          2,
+        );
         try {
           await invoke("save_file", { data: serializedData });
           setProjectEdited(false);
@@ -184,6 +236,34 @@ const EditorRoute = () => {
     projectPath,
     setProjectEdited,
   ]);
+
+  useEffect(() => {
+    const applyPresetUnlisten = listen<Record<PanelId, DockSlot>>(
+      "apply-layout-preset",
+      (event) => {
+        setPositions(event.payload);
+      },
+    );
+
+    const savePresetUnlisten = listen(
+      "save-layout-preset-requested",
+      () => {
+        setShowSaveLayoutDialog(true);
+      },
+    );
+
+    return () => {
+      applyPresetUnlisten.then((f) => f());
+      savePresetUnlisten.then((f) => f());
+    };
+  }, [setPositions]);
+
+  const handleSaveLayoutPreset = useCallback(
+    async (name: string) => {
+      await invoke("save_layout_preset", { name, positions: panelPositions });
+    },
+    [panelPositions],
+  );
 
   const cloneData = useCallback(<T,>(value: T): T => {
     if (typeof structuredClone === "function") {
@@ -581,63 +661,177 @@ const EditorRoute = () => {
     await appWindow.close();
   }, [setProjectEdited, setShowDiscardDialog]);
 
-  return (
-    <>
-      <ResizablePanelGroup orientation="horizontal" className="text-sm">
-        <ResizablePanel
-          className="bg-secondary flex flex-col"
-          minSize="300px"
-          defaultSize="300px"
-          groupResizeBehavior="preserve-pixel-size"
-        >
-          <PanelBar>Library</PanelBar>
-          <div className="flex flex-col flex-1 px-4 py-3 min-h-0">
-            <LibraryPanel
-              onItemDropped={handleLibraryItemDropped}
-              onItemClicked={handleLibraryItemClicked}
-            />
-          </div>
-        </ResizablePanel>
-        <ResizablePanel className="flex flex-col" minSize="300px">
-          <div ref={reactFlowWrapperRef} className="flex flex-col flex-1">
-            <FlowEditor />
-          </div>
-        </ResizablePanel>
-        <ResizablePanel
-          className="bg-secondary"
-          minSize="300px"
-          defaultSize="300px"
-          groupResizeBehavior="preserve-pixel-size"
-        >
-          <ResizablePanelGroup orientation="vertical">
-            <ResizablePanel
-              className="flex flex-col"
-              minSize="200px"
-              defaultSize="200px"
-            >
-              <PanelBar>Project</PanelBar>
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const panelId = event.active.data.current?.panelId as PanelId | undefined;
+    if (panelId) {
+      setActiveDrag(panelId);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveDrag(null);
+      const { active, over } = event;
+      if (!over) return;
+
+      const panelId = active.data.current?.panelId as PanelId | undefined;
+      if (!panelId) return;
+
+      const side = over.data.current?.side;
+      const position = over.data.current?.position;
+      const action = (over.data.current?.action ?? "stack") as DockAction;
+      if (side && position) {
+        movePanel(panelId, { side, position }, action);
+      }
+    },
+    [movePanel],
+  );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDrag(null);
+  }, []);
+
+  const renderPanelContent = useCallback(
+    (panelId: PanelId) => {
+      switch (panelId) {
+        case "library":
+          return (
+            <>
+              <PanelBar panelId="library">Library</PanelBar>
+              <div className="flex flex-col flex-1 px-4 py-3 min-h-0">
+                <LibraryPanel
+                  onItemDropped={handleLibraryItemDropped}
+                  onItemClicked={handleLibraryItemClicked}
+                />
+              </div>
+            </>
+          );
+        case "project":
+          return (
+            <>
+              <PanelBar panelId="project">Project</PanelBar>
               <div className="flex flex-col h-full pl-4 py-2 pb-7 min-h-0 min-w-0">
                 <ProjectPanel />
               </div>
-            </ResizablePanel>
-            <ResizableHandle className="bg-muted-foreground/25" />
-            <ResizablePanel
-              className="flex flex-col"
-              minSize="200px"
-              defaultSize="200px"
-            >
-              <PanelBar>Properties</PanelBar>
+            </>
+          );
+        case "properties":
+          return (
+            <>
+              <PanelBar panelId="properties">Properties</PanelBar>
               <div className="flex flex-col flex-1 px-4 py-2 min-h-0 min-w-0">
                 <PropertiesPanel />
               </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+            </>
+          );
+      }
+    },
+    [handleLibraryItemDropped, handleLibraryItemClicked],
+  );
+
+  const renderSidebar = useCallback(
+    (side: DockSide, panels: PanelId[]) => {
+      if (panels.length === 0) return null;
+
+      if (panels.length === 1) {
+        return (
+          <div className="relative flex flex-col h-full">
+            {renderPanelContent(panels[0])}
+            {activeDrag && activeDrag !== panels[0] && (
+              <>
+                <DockDropZone side={side} position="top" action="stack" />
+                <DockDropZone side={side} position="top" action="replace" />
+                <DockDropZone side={side} position="bottom" action="stack" />
+              </>
+            )}
+          </div>
+        );
+      }
+
+      // Two panels: vertical split — each panel gets a replace zone
+      return (
+        <ResizablePanelGroup orientation="vertical">
+          <ResizablePanel
+            className="relative flex flex-col"
+            minSize="200px"
+            defaultSize="200px"
+          >
+            {renderPanelContent(panels[0])}
+            {activeDrag && activeDrag !== panels[0] && (
+              <div className="absolute inset-0 z-50">
+                <DockReplaceZone side={side} position="top" />
+              </div>
+            )}
+          </ResizablePanel>
+          <ResizableHandle className="bg-muted-foreground/25" />
+          <ResizablePanel
+            className="relative flex flex-col"
+            minSize="200px"
+            defaultSize="200px"
+          >
+            {renderPanelContent(panels[1])}
+            {activeDrag && activeDrag !== panels[1] && (
+              <div className="absolute inset-0 z-50">
+                <DockReplaceZone side={side} position="bottom" />
+              </div>
+            )}
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      );
+    },
+    [renderPanelContent, activeDrag],
+  );
+
+  return (
+    <>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <ResizablePanelGroup orientation="horizontal" className="text-sm">
+          <ResizablePanel
+            className="bg-secondary flex flex-col"
+            minSize="300px"
+            defaultSize="300px"
+            groupResizeBehavior="preserve-pixel-size"
+          >
+            {renderSidebar("left", leftPanels)}
+          </ResizablePanel>
+          <ResizablePanel className="flex flex-col" minSize="300px">
+            <div ref={reactFlowWrapperRef} className="flex flex-col flex-1">
+              <FlowEditor />
+            </div>
+          </ResizablePanel>
+          <ResizablePanel
+            className="bg-secondary"
+            minSize="300px"
+            defaultSize="300px"
+            groupResizeBehavior="preserve-pixel-size"
+          >
+            {renderSidebar("right", rightPanels)}
+          </ResizablePanel>
+        </ResizablePanelGroup>
+
+        <DragOverlay>
+          {activeDrag ? (
+            <div className="bg-background/90 border border-border px-4 py-1 rounded shadow-lg text-sm">
+              {PANEL_LABELS[activeDrag]}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
       <DiscardDialog
         open={showDiscardDialog}
         onChange={setShowDiscardDialog}
         onConfirm={handleDiscardConfirm}
+      />
+      <SaveLayoutDialog
+        open={showSaveLayoutDialog}
+        onChange={setShowSaveLayoutDialog}
+        onSave={handleSaveLayoutPreset}
       />
     </>
   );

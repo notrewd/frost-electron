@@ -342,6 +342,11 @@ const FlowEditor = () => {
         setNodes(() => flowData.nodes || []);
         setEdges(() => flowData.edges || []);
 
+        if (flowData.panelLayout) {
+          const { useLayoutStore } = await import("@/stores/layout-store");
+          useLayoutStore.getState().setPositions(flowData.panelLayout);
+        }
+
         // Wait a tick for state to update, then clear history and resume
         setTimeout(() => {
           clear();
@@ -389,6 +394,11 @@ const FlowEditor = () => {
 
           setNodes(() => flowData.nodes || []);
           setEdges(() => flowData.edges || []);
+
+          if (flowData.panelLayout) {
+            const { useLayoutStore } = await import("@/stores/layout-store");
+            useLayoutStore.getState().setPositions(flowData.panelLayout);
+          }
 
           setTimeout(() => {
             clear();

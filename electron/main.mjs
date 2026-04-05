@@ -126,6 +126,59 @@ function clearRecentProjects() {
   fs.writeFileSync(getRecentProjectsPath(), "[]");
 }
 
+// ─── Layout Presets ──────────────────────────────────────────────────────────
+
+const BUILTIN_LAYOUT_PRESETS = [
+  {
+    name: "Default",
+    builtin: true,
+    positions: {
+      library: { side: "left", position: "top" },
+      project: { side: "right", position: "top" },
+      properties: { side: "right", position: "bottom" },
+    },
+  },
+  {
+    name: "Focused",
+    builtin: true,
+    positions: {
+      library: { side: "left", position: "top" },
+      project: { side: "left", position: "bottom" },
+      properties: { side: "right", position: "top" },
+    },
+  },
+  {
+    name: "Reversed",
+    builtin: true,
+    positions: {
+      properties: { side: "left", position: "top" },
+      library: { side: "right", position: "top" },
+      project: { side: "right", position: "bottom" },
+    },
+  },
+];
+
+function getLayoutPresetsPath() {
+  return path.join(getAppDataDir(), "layout_presets.json");
+}
+
+function getUserLayoutPresets() {
+  try {
+    const data = fs.readFileSync(getLayoutPresetsPath(), "utf-8");
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+function saveUserLayoutPresets(presets) {
+  fs.writeFileSync(getLayoutPresetsPath(), JSON.stringify(presets, null, 2));
+}
+
+function getAllLayoutPresets() {
+  return [...BUILTIN_LAYOUT_PRESETS, ...getUserLayoutPresets()];
+}
+
 // ─── Window Factory ───────────────────────────────────────────────────────────
 
 function createWindow(label, route, options = {}) {
@@ -529,6 +582,39 @@ function buildMenu() {
       ],
     },
     {
+      label: "Layout",
+      submenu: [
+        ...getAllLayoutPresets().map((preset) => ({
+          label: preset.name,
+          click: () =>
+            broadcastEvent("apply-layout-preset", preset.positions),
+        })),
+        { type: "separator" },
+        {
+          label: "Save Current Layout...",
+          enabled: e,
+          click: () => broadcastEvent("save-layout-preset-requested", null),
+        },
+        { type: "separator" },
+        ...getUserLayoutPresets().map((preset) => ({
+          label: `Delete "${preset.name}"`,
+          click: () => {
+            const userPresets = getUserLayoutPresets().filter(
+              (p) => p.name !== preset.name,
+            );
+            saveUserLayoutPresets(userPresets);
+            buildMenu();
+            broadcastEvent("layout-presets-updated", getAllLayoutPresets());
+          },
+        })),
+      ].filter(
+        (item, index, arr) =>
+          // Remove trailing separators or consecutive separators
+          item.type !== "separator" ||
+          (index < arr.length - 1 && arr[index + 1]?.type !== "separator"),
+      ),
+    },
+    {
       label: "Window",
       submenu: [
         {
@@ -780,6 +866,33 @@ function setupIPC() {
 
   ipcMain.handle("save_settings_state", () => {
     saveSettings();
+  });
+
+  // Layout presets
+  ipcMain.handle("get_layout_presets", () => {
+    return getAllLayoutPresets();
+  });
+
+  ipcMain.handle("save_layout_preset", (_e, { name, positions }) => {
+    const userPresets = getUserLayoutPresets();
+    // Replace existing preset with same name, or add new
+    const index = userPresets.findIndex((p) => p.name === name);
+    const preset = { name, builtin: false, positions };
+    if (index >= 0) {
+      userPresets[index] = preset;
+    } else {
+      userPresets.push(preset);
+    }
+    saveUserLayoutPresets(userPresets);
+    buildMenu();
+    broadcastEvent("layout-presets-updated", getAllLayoutPresets());
+  });
+
+  ipcMain.handle("delete_layout_preset", (_e, { name }) => {
+    const userPresets = getUserLayoutPresets().filter((p) => p.name !== name);
+    saveUserLayoutPresets(userPresets);
+    buildMenu();
+    broadcastEvent("layout-presets-updated", getAllLayoutPresets());
   });
 
   // Code generation
