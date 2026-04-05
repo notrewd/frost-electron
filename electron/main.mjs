@@ -301,6 +301,20 @@ function openGenerateWindow() {
   });
 }
 
+function openGeneratingWindow() {
+  return createWindow("generating", "/generating", {
+    width: 400,
+    height: 250,
+    minWidth: 400,
+    minHeight: 250,
+    title: "Generating...",
+    maximizable: false,
+    minimizable: false,
+    resizable: false,
+    alwaysOnTop: true,
+  });
+}
+
 // ─── Broadcast to all windows ─────────────────────────────────────────────────
 
 function broadcastEvent(eventName, payload) {
@@ -770,9 +784,51 @@ function setupIPC() {
 
   // Code generation
   ipcMain.handle(
-    "generate_diagram",
-    (_e, { paths, recursive, generateGroups }) => {
-      return generateDiagram(paths, recursive, generateGroups);
+    "start_generation",
+    async (_e, { paths, recursive, generateGroups }) => {
+      // Close the generate options window
+      const genWin = windows["generate"];
+      if (genWin && !genWin.isDestroyed()) {
+        genWin.close();
+      }
+
+      // Open progress window and wait for it to be ready
+      const progressWin = openGeneratingWindow();
+      await new Promise((resolve) => {
+        if (progressWin.webContents.isLoading()) {
+          progressWin.webContents.once("did-finish-load", resolve);
+        } else {
+          resolve();
+        }
+      });
+
+      try {
+        const result = await generateDiagram(
+          paths,
+          recursive,
+          generateGroups,
+          (progress) => {
+            // Send progress updates to the generating window
+            if (progressWin && !progressWin.isDestroyed()) {
+              progressWin.webContents.send(
+                "app-event",
+                "generation-progress",
+                progress,
+              );
+            }
+          },
+        );
+
+        // Send result to editor
+        sendToWindow("editor", "diagram-generated", result);
+      } catch (err) {
+        console.error("Generation failed:", err);
+      } finally {
+        // Close progress window
+        if (progressWin && !progressWin.isDestroyed()) {
+          progressWin.close();
+        }
+      }
     },
   );
 

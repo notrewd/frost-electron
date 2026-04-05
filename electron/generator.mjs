@@ -429,7 +429,13 @@ function walkDirectory(dirPath, groups, parentGroup, generateGroups, files) {
 
 // ─── Main Generator ───────────────────────────────────────────────────────────
 
-export function generateDiagram(paths, recursive, generateGroups) {
+export async function generateDiagram(paths, recursive, generateGroups, onProgress) {
+  const report = (current, total, message) => {
+    if (onProgress) onProgress({ current, total, message });
+  };
+
+  report(0, 1, "Scanning directories...");
+
   const groups = new Map();
   const files = [];
 
@@ -446,11 +452,18 @@ export function generateDiagram(paths, recursive, generateGroups) {
     }
   }
 
+  const supportedFiles = files.filter((f) => getLanguageForFile(f.path));
+  const totalFiles = supportedFiles.length;
+
   // Parse all files
   const allClasses = [];
+  let processed = 0;
   for (const file of files) {
     const lang = getLanguageForFile(file.path);
     if (!lang) continue;
+
+    processed++;
+    report(processed, totalFiles, `Parsing file ${processed} of ${totalFiles}...`);
 
     let source;
     try {
@@ -477,7 +490,12 @@ export function generateDiagram(paths, recursive, generateGroups) {
       cls.path = file.path;
     }
     allClasses.push(...fileClasses);
+
+    // Yield to event loop so progress IPC messages can be sent
+    await new Promise((r) => setTimeout(r, 0));
   }
+
+  report(totalFiles, totalFiles, "Generating diagram...");
 
   // Build nodes
   const nodes = [];

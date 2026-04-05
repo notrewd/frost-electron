@@ -14,7 +14,7 @@ import {useShallow} from "zustand/react/shallow";
 import ObjectNode from "../nodes/object-node";
 import {ProjectOpenedEvent} from "@/types/events";
 import {emit, listen} from "@/lib/electron/events";
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {invoke} from "@/lib/electron/invoke";
 import {toPng} from "html-to-image";
 import {useStore} from "zustand";
@@ -179,6 +179,8 @@ const proOptions = { hideAttribution: true };
 
 const FlowEditor = () => {
   const mousePosition = useMousePosition();
+  const [loading, setLoading] = useState(true);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [edgeTypesMenuPosition, setEdgeTypesMenuPosition] = useState<{
     x: number;
@@ -328,6 +330,7 @@ const FlowEditor = () => {
     invoke("toggle_menu_item", { item: "select_all_nodes", enabled: true });
 
     const fetchProjectData = async () => {
+      setLoading(true);
       try {
         const data = await invoke<string>("request_project_data");
         if (!data) return;
@@ -346,6 +349,9 @@ const FlowEditor = () => {
         }, 0);
       } catch (error) {
         console.error("Failed to fetch project data:", error);
+      } finally {
+        // Small delay to let React Flow initialize before revealing
+        loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
       }
     };
 
@@ -355,8 +361,7 @@ const FlowEditor = () => {
       "project-opened",
       async (event) => {
         const { data } = event.payload;
-
-        console.log("Received project data:", data);
+        setLoading(true);
 
         pause();
 
@@ -366,6 +371,7 @@ const FlowEditor = () => {
           setTimeout(() => {
             clear();
             resume();
+            loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
           }, 0);
           return;
         }
@@ -376,6 +382,7 @@ const FlowEditor = () => {
             setTimeout(() => {
               clear();
               resume();
+              loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
             }, 0);
             return;
           }
@@ -386,12 +393,14 @@ const FlowEditor = () => {
           setTimeout(() => {
             clear();
             resume();
+            loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
           }, 0);
         } catch (error) {
           console.error("Failed to load project data:", error);
           setTimeout(() => {
             clear();
             resume();
+            loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
           }, 0);
         }
       },
@@ -855,6 +864,7 @@ const FlowEditor = () => {
     );
 
     return () => {
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
       projectOpenedUnlisten.then((f) => f());
       undoUnlisten.then((f) => f());
       redoUnlisten.then((f) => f());
@@ -1044,6 +1054,17 @@ const FlowEditor = () => {
     () => [gridSize, gridSize] as [number, number],
     [gridSize],
   );
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

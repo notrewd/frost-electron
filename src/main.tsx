@@ -14,6 +14,7 @@ import ExportRoute from "./routes/export-route.tsx";
 import EdgesOutlinerRoute from "./routes/edges-outliner-route.tsx";
 import HistoryRoute from "./routes/history-route.tsx";
 import GenerateRoute from "./routes/generate-route.tsx";
+import GeneratingRoute from "./routes/generating-route.tsx";
 
 document.addEventListener("contextmenu", (e) => e.preventDefault());
 
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 />
                 <Route path="/history" element={<HistoryRoute />} />
                 <Route path="/generate" element={<GenerateRoute />} />
+                <Route path="/generating" element={<GeneratingRoute />} />
               </Route>
               <Route element={<MainLayout />}>
                 <Route path="/editor" element={<EditorRoute />} />

@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { invoke } from "@/lib/electron/invoke";
-import { getCurrentWindow } from "@/lib/electron/window";
-import { emit } from "@/lib/electron/events";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { open } from "@/lib/electron/dialog";
-
-const appWindow = getCurrentWindow();
 
 export default function GenerateRoute() {
   const [paths, setPaths] = useState<string[]>([]);
@@ -40,24 +36,13 @@ export default function GenerateRoute() {
 
   const handleGenerate = async () => {
     try {
-      const generated: any = await invoke("generate_diagram", {
+      await invoke("start_generation", {
         paths,
         recursive,
         generateGroups,
       });
-
-      const nodes = generated.nodes || [];
-      const edges = generated.edges || [];
-
-      const finalResult = {
-        nodes,
-        edges,
-      };
-
-      await emit("diagram-generated", finalResult);
-      await appWindow.close();
     } catch (error) {
-      console.error("Error generating diagram:", error);
+      console.error("Error starting generation:", error);
     }
   };
 
@@ -118,7 +103,7 @@ export default function GenerateRoute() {
       </div>
 
       <div className="mt-auto flex justify-end gap-2 pt-4 border-t">
-        <Button variant="outline" onClick={() => appWindow.close()}>
+        <Button variant="outline" onClick={() => invoke("close_window", { label: "generate" })}>
           Cancel
         </Button>
         <Button onClick={handleGenerate} disabled={paths.length === 0}>
