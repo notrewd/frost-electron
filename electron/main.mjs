@@ -516,7 +516,14 @@ function buildMenu() {
     },
     {
       label: "Window",
-      submenu: [{ role: "minimize" }],
+      submenu: [
+        {
+          label: "Welcome",
+          click: () => openWelcomeWindow(),
+        },
+        { type: "separator" },
+        { role: "minimize" },
+      ],
     },
   ];
 

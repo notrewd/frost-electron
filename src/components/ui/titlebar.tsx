@@ -24,6 +24,7 @@ import {
   History,
   AlignVerticalDistributeCenter,
   AlignHorizontalDistributeCenter,
+  Home,
 } from "lucide-react";
 import {
   Menubar,
@@ -135,6 +136,14 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
       await invoke("open_edges_outliner_window");
     } catch (error) {
       console.error("Failed to open edges outliner window:", error);
+    }
+  }, []);
+
+  const showWelcomeWindow = useCallback(async () => {
+    try {
+      await invoke("open_welcome_window");
+    } catch (error) {
+      console.error("Failed to open welcome window:", error);
     }
   }, []);
 
@@ -533,6 +542,15 @@ const Titlebar: FC<TitlebarProps> = ({ variant = "default" }) => {
                       <ListTree className="size-4" />
                       Edges Outliner
                       <MenubarShortcut>Ctrl+L</MenubarShortcut>
+                    </MenubarItem>
+                  </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
+                  <MenubarTrigger>Window</MenubarTrigger>
+                  <MenubarContent>
+                    <MenubarItem onClick={showWelcomeWindow}>
+                      <Home className="size-4" />
+                      Welcome
                     </MenubarItem>
                   </MenubarContent>
                 </MenubarMenu>
