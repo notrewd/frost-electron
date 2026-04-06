@@ -9,8 +9,12 @@ export const useSettingsStore = create<SettingsState>(() => ({
   pan_on_scroll: false,
   show_minimap: true,
   colored_nodes: true,
-  object_node_access_modifier_color_light: "#16a34a",
-  object_node_access_modifier_color_dark: "#16a34a",
+  object_node_public_access_color_light: "#16a34a",
+  object_node_public_access_color_dark: "#16a34a",
+  object_node_private_access_color_light: "#dc2626",
+  object_node_private_access_color_dark: "#dc2626",
+  object_node_protected_access_color_light: "#ca8a04",
+  object_node_protected_access_color_dark: "#ca8a04",
   object_node_type_separator_color_light: "#dc2626",
   object_node_type_separator_color_dark: "#dc2626",
   object_node_type_color_light: "#2563eb",
@@ -51,10 +55,20 @@ export const useSettingsStore = create<SettingsState>(() => ({
     invoke("set_settings_state", { showMinimap: enabled }),
   setColoredNodes: (enabled: boolean) =>
     invoke("set_settings_state", { coloredNodes: enabled }),
-  setObjectNodeAccessModifierColor: (light: string, dark: string) =>
+  setObjectNodePublicAccessColor: (light: string, dark: string) =>
     invoke("set_settings_state", {
-      objectNodeAccessModifierColorLight: light,
-      objectNodeAccessModifierColorDark: dark,
+      objectNodePublicAccessColorLight: light,
+      objectNodePublicAccessColorDark: dark,
+    }),
+  setObjectNodePrivateAccessColor: (light: string, dark: string) =>
+    invoke("set_settings_state", {
+      objectNodePrivateAccessColorLight: light,
+      objectNodePrivateAccessColorDark: dark,
+    }),
+  setObjectNodeProtectedAccessColor: (light: string, dark: string) =>
+    invoke("set_settings_state", {
+      objectNodeProtectedAccessColorLight: light,
+      objectNodeProtectedAccessColorDark: dark,
     }),
   setObjectNodeTypeSeparatorColor: (light: string, dark: string) =>
     invoke("set_settings_state", {
@@ -128,10 +142,18 @@ const fetchSettings = async () => {
     pan_on_scroll: settings.pan_on_scroll,
     show_minimap: settings.show_minimap,
     colored_nodes: settings.colored_nodes,
-    object_node_access_modifier_color_light:
-      settings.object_node_access_modifier_color_light,
-    object_node_access_modifier_color_dark:
-      settings.object_node_access_modifier_color_dark,
+    object_node_public_access_color_light:
+      settings.object_node_public_access_color_light,
+    object_node_public_access_color_dark:
+      settings.object_node_public_access_color_dark,
+    object_node_private_access_color_light:
+      settings.object_node_private_access_color_light,
+    object_node_private_access_color_dark:
+      settings.object_node_private_access_color_dark,
+    object_node_protected_access_color_light:
+      settings.object_node_protected_access_color_light,
+    object_node_protected_access_color_dark:
+      settings.object_node_protected_access_color_dark,
     object_node_type_separator_color_light:
       settings.object_node_type_separator_color_light,
     object_node_type_separator_color_dark:
@@ -181,10 +203,18 @@ const subscribeToSettingsUpdates = () => {
       pan_on_scroll: settings.panOnScroll,
       show_minimap: settings.showMinimap,
       colored_nodes: settings.coloredNodes,
-      object_node_access_modifier_color_light:
-        settings.objectNodeAccessModifierColorLight,
-      object_node_access_modifier_color_dark:
-        settings.objectNodeAccessModifierColorDark,
+      object_node_public_access_color_light:
+        settings.objectNodePublicAccessColorLight,
+      object_node_public_access_color_dark:
+        settings.objectNodePublicAccessColorDark,
+      object_node_private_access_color_light:
+        settings.objectNodePrivateAccessColorLight,
+      object_node_private_access_color_dark:
+        settings.objectNodePrivateAccessColorDark,
+      object_node_protected_access_color_light:
+        settings.objectNodeProtectedAccessColorLight,
+      object_node_protected_access_color_dark:
+        settings.objectNodeProtectedAccessColorDark,
       object_node_type_separator_color_light:
         settings.objectNodeTypeSeparatorColorLight,
       object_node_type_separator_color_dark:

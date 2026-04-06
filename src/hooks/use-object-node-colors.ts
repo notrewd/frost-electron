@@ -6,8 +6,12 @@ export function useObjectNodeColors() {
   const {
     coloredNodes,
     theme,
-    accessColorLight,
-    accessColorDark,
+    publicAccessColorLight,
+    publicAccessColorDark,
+    privateAccessColorLight,
+    privateAccessColorDark,
+    protectedAccessColorLight,
+    protectedAccessColorDark,
     separatorColorLight,
     separatorColorDark,
     typeColorLight,
@@ -20,8 +24,12 @@ export function useObjectNodeColors() {
     useShallow((state) => ({
       coloredNodes: state.colored_nodes,
       theme: state.theme,
-      accessColorLight: state.object_node_access_modifier_color_light,
-      accessColorDark: state.object_node_access_modifier_color_dark,
+      publicAccessColorLight: state.object_node_public_access_color_light,
+      publicAccessColorDark: state.object_node_public_access_color_dark,
+      privateAccessColorLight: state.object_node_private_access_color_light,
+      privateAccessColorDark: state.object_node_private_access_color_dark,
+      protectedAccessColorLight: state.object_node_protected_access_color_light,
+      protectedAccessColorDark: state.object_node_protected_access_color_dark,
       separatorColorLight: state.object_node_type_separator_color_light,
       separatorColorDark: state.object_node_type_separator_color_dark,
       typeColorLight: state.object_node_type_color_light,
@@ -42,10 +50,20 @@ export function useObjectNodeColors() {
   );
 
   return {
-    aColor: coloredNodes
+    publicAColor: coloredNodes
       ? isDark
-        ? accessColorDark
-        : accessColorLight
+        ? publicAccessColorDark
+        : publicAccessColorLight
+      : undefined,
+    privateAColor: coloredNodes
+      ? isDark
+        ? privateAccessColorDark
+        : privateAccessColorLight
+      : undefined,
+    protectedAColor: coloredNodes
+      ? isDark
+        ? protectedAccessColorDark
+        : protectedAccessColorLight
       : undefined,
     sColor: coloredNodes
       ? isDark

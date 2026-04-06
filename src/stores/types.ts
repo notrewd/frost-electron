@@ -43,8 +43,12 @@ export interface SettingsState {
   pan_on_scroll: boolean;
   show_minimap: boolean;
   colored_nodes: boolean;
-  object_node_access_modifier_color_light: string;
-  object_node_access_modifier_color_dark: string;
+  object_node_public_access_color_light: string;
+  object_node_public_access_color_dark: string;
+  object_node_private_access_color_light: string;
+  object_node_private_access_color_dark: string;
+  object_node_protected_access_color_light: string;
+  object_node_protected_access_color_dark: string;
   object_node_type_separator_color_light: string;
   object_node_type_separator_color_dark: string;
   object_node_type_color_light: string;
@@ -81,7 +85,9 @@ export interface SettingsState {
   setPanOnScroll: (enabled: boolean) => void;
   setShowMinimap: (enabled: boolean) => void;
   setColoredNodes: (enabled: boolean) => void;
-  setObjectNodeAccessModifierColor: (light: string, dark: string) => void;
+  setObjectNodePublicAccessColor: (light: string, dark: string) => void;
+  setObjectNodePrivateAccessColor: (light: string, dark: string) => void;
+  setObjectNodeProtectedAccessColor: (light: string, dark: string) => void;
   setObjectNodeTypeSeparatorColor: (light: string, dark: string) => void;
   setObjectNodeTypeColor: (light: string, dark: string) => void;
   setObjectNodeDefaultValueColor: (light: string, dark: string) => void;

@@ -47,7 +47,8 @@ const ObjectNodeMethodItem: FC<ObjectNodeMethodItemProps> = ({
   onRemoveParameter,
 }) => {
   const [collapsed, setCollapsed] = useState(true);
-  const { aColor, sColor, tColor } = useObjectNodeColors();
+  const { publicAColor, privateAColor, protectedAColor, sColor, tColor } = useObjectNodeColors();
+  const aColor = method.accessModifier === "public" ? publicAColor : method.accessModifier === "private" ? privateAColor : protectedAColor;
 
   return (
     <SortableItem key={method.id} value={method.id} asChild>

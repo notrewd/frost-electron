@@ -58,10 +58,16 @@ const ObjectNodesSettings: FC<ObjectNodesSettingsProps> = ({
   const {
     coloredNodes,
     setColoredNodes,
-    objectNodeAccessModifierColorLight,
-    objectNodeAccessModifierColorDark,
+    objectNodePublicAccessColorLight,
+    objectNodePublicAccessColorDark,
+    objectNodePrivateAccessColorLight,
+    objectNodePrivateAccessColorDark,
+    objectNodeProtectedAccessColorLight,
+    objectNodeProtectedAccessColorDark,
     theme,
-    setObjectNodeAccessModifierColor,
+    setObjectNodePublicAccessColor,
+    setObjectNodePrivateAccessColor,
+    setObjectNodeProtectedAccessColor,
     objectNodeTypeSeparatorColorLight,
     objectNodeTypeSeparatorColorDark,
     setObjectNodeTypeSeparatorColor,
@@ -78,12 +84,22 @@ const ObjectNodesSettings: FC<ObjectNodesSettingsProps> = ({
     useShallow((state) => ({
       coloredNodes: state.colored_nodes,
       setColoredNodes: state.setColoredNodes,
-      objectNodeAccessModifierColorLight:
-        state.object_node_access_modifier_color_light,
-      objectNodeAccessModifierColorDark:
-        state.object_node_access_modifier_color_dark,
+      objectNodePublicAccessColorLight:
+        state.object_node_public_access_color_light,
+      objectNodePublicAccessColorDark:
+        state.object_node_public_access_color_dark,
+      objectNodePrivateAccessColorLight:
+        state.object_node_private_access_color_light,
+      objectNodePrivateAccessColorDark:
+        state.object_node_private_access_color_dark,
+      objectNodeProtectedAccessColorLight:
+        state.object_node_protected_access_color_light,
+      objectNodeProtectedAccessColorDark:
+        state.object_node_protected_access_color_dark,
       theme: state.theme,
-      setObjectNodeAccessModifierColor: state.setObjectNodeAccessModifierColor,
+      setObjectNodePublicAccessColor: state.setObjectNodePublicAccessColor,
+      setObjectNodePrivateAccessColor: state.setObjectNodePrivateAccessColor,
+      setObjectNodeProtectedAccessColor: state.setObjectNodeProtectedAccessColor,
       objectNodeTypeSeparatorColorLight:
         state.object_node_type_separator_color_light,
       objectNodeTypeSeparatorColorDark:
@@ -110,9 +126,15 @@ const ObjectNodesSettings: FC<ObjectNodesSettingsProps> = ({
       ? document.documentElement.classList.contains("dark")
       : theme === "dark";
 
-  const objectNodeAccessModifierColor = isDark
-    ? objectNodeAccessModifierColorDark
-    : objectNodeAccessModifierColorLight;
+  const objectNodePublicAccessColor = isDark
+    ? objectNodePublicAccessColorDark
+    : objectNodePublicAccessColorLight;
+  const objectNodePrivateAccessColor = isDark
+    ? objectNodePrivateAccessColorDark
+    : objectNodePrivateAccessColorLight;
+  const objectNodeProtectedAccessColor = isDark
+    ? objectNodeProtectedAccessColorDark
+    : objectNodeProtectedAccessColorLight;
   const objectNodeTypeSeparatorColor = isDark
     ? objectNodeTypeSeparatorColorDark
     : objectNodeTypeSeparatorColorLight;
@@ -148,11 +170,39 @@ const ObjectNodesSettings: FC<ObjectNodesSettingsProps> = ({
       )}
       <Separator className="my-2" />
       <ColorPickerField
-        label="Access Modifier Color"
-        description="Color for access modifiers like +, -, #"
-        color={objectNodeAccessModifierColor}
+        label="Public Access Color"
+        description="Color for public access modifier (+)"
+        color={objectNodePublicAccessColor}
         onChange={(c: string) => {
-          setObjectNodeAccessModifierColor(
+          setObjectNodePublicAccessColor(
+            isDark ? getThemeColorCounterpart(c, false) : c,
+            isDark ? c : getThemeColorCounterpart(c, true),
+          );
+          onChange?.();
+        }}
+        isMatch={isMatch}
+      />
+
+      <ColorPickerField
+        label="Private Access Color"
+        description="Color for private access modifier (-)"
+        color={objectNodePrivateAccessColor}
+        onChange={(c: string) => {
+          setObjectNodePrivateAccessColor(
+            isDark ? getThemeColorCounterpart(c, false) : c,
+            isDark ? c : getThemeColorCounterpart(c, true),
+          );
+          onChange?.();
+        }}
+        isMatch={isMatch}
+      />
+
+      <ColorPickerField
+        label="Protected Access Color"
+        description="Color for protected access modifier (#)"
+        color={objectNodeProtectedAccessColor}
+        onChange={(c: string) => {
+          setObjectNodeProtectedAccessColor(
             isDark ? getThemeColorCounterpart(c, false) : c,
             isDark ? c : getThemeColorCounterpart(c, true),
           );

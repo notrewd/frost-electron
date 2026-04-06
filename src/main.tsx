@@ -28,9 +28,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <HashRouter>
             <Routes>
               <Route index element={<WelcomeRoute />} />
+              <Route path="/settings" element={<SettingsRoute />} />
               <Route element={<DialogLayout />}>
                 <Route path="/new-project" element={<NewProjectRoute />} />
-                <Route path="/settings" element={<SettingsRoute />} />
                 <Route path="/export" element={<ExportRoute />} />
                 <Route
                   path="/edges-outliner"

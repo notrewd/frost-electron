@@ -30,7 +30,8 @@ const ObjectNodeAttributeItem: FC<ObjectNodeAttributeItemProps> = ({
   updateAttribute,
   removeAttribute,
 }) => {
-  const { aColor, sColor, tColor, dColor } = useObjectNodeColors();
+  const { publicAColor, privateAColor, protectedAColor, sColor, tColor, dColor } = useObjectNodeColors();
+  const aColor = attr.accessModifier === "public" ? publicAColor : attr.accessModifier === "private" ? privateAColor : protectedAColor;
 
   return (
     <SortableItem key={attr.id} value={attr.id} asChild>

@@ -36,6 +36,7 @@ import {
 import { useCallback, useState, useEffect, useRef } from "react";
 import DiscardDialog from "@/components/ui/dialogs/discard-dialog";
 import { getCurrentWindow } from "@/lib/electron/window";
+import Titlebar from "@/components/ui/titlebar";
 
 const appWindow = getCurrentWindow();
 
@@ -217,10 +218,18 @@ const SettingsRoute = () => {
           snapToGrid: initialSettings.snap_to_grid,
           gridSize: initialSettings.grid_size,
           compactNodes: initialSettings.compact_nodes,
-          objectNodeAccessModifierColorLight:
-            initialSettings.object_node_access_modifier_color_light,
-          objectNodeAccessModifierColorDark:
-            initialSettings.object_node_access_modifier_color_dark,
+          objectNodePublicAccessColorLight:
+            initialSettings.object_node_public_access_color_light,
+          objectNodePublicAccessColorDark:
+            initialSettings.object_node_public_access_color_dark,
+          objectNodePrivateAccessColorLight:
+            initialSettings.object_node_private_access_color_light,
+          objectNodePrivateAccessColorDark:
+            initialSettings.object_node_private_access_color_dark,
+          objectNodeProtectedAccessColorLight:
+            initialSettings.object_node_protected_access_color_light,
+          objectNodeProtectedAccessColorDark:
+            initialSettings.object_node_protected_access_color_dark,
           objectNodeTypeSeparatorColorLight:
             initialSettings.object_node_type_separator_color_light,
           objectNodeTypeSeparatorColorDark:
@@ -302,14 +311,16 @@ const SettingsRoute = () => {
   }, []);
 
   return (
-    <SidebarProvider>
-      <Sidebar
-        className={cn(
-          type() === "macos" && "mt-10 h-auto!",
-          type() === "windows" && "mt-8 h-auto!",
-        )}
-        variant="floating"
-      >
+    <>
+      <Titlebar variant="dialog" />
+      <SidebarProvider className="flex-1 overflow-hidden">
+        <Sidebar
+          className={cn(
+            type() === "macos" && "mt-10 h-auto!",
+            type() === "windows" && "mt-8 h-auto!",
+          )}
+          variant="floating"
+        >
         <SidebarContent>
           <SidebarGroup>
             <div className="px-2 mb-2 -mx-2">
@@ -362,13 +373,13 @@ const SettingsRoute = () => {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <main className="flex flex-col items-stretch flex-1">
+      <main className="flex flex-col items-stretch flex-1 overflow-hidden p-4">
         <ContentHeader
           title={selectedCategory.title}
           description={selectedCategory.description}
           className="px-2"
         />
-        <ScrollArea className="flex flex-col flex-1 overflow-hidden">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="flex flex-1 flex-col p-2 gap-4">
             {selectedCategory.id === "general" && (
               <GeneralSettings
@@ -408,8 +419,8 @@ const SettingsRoute = () => {
             )}
           </div>
         </ScrollArea>
-        <Separator className="my-2" />
-        <div className="flex justify-end gap-2">
+        <Separator className="my-2 shrink-0" />
+        <div className="flex justify-end gap-2 shrink-0">
           <Button
             variant="outline"
             onClick={handleSave}
@@ -420,14 +431,15 @@ const SettingsRoute = () => {
           </Button>
         </div>
       </main>
-      <DiscardDialog
-        open={showDiscardDialog}
-        onChange={setShowDiscardDialog}
-        onConfirm={handleDiscardConfirm}
-        title="Unsaved settings"
-        description="You have unsaved settings. Do you want to discard them and close?"
-      />
-    </SidebarProvider>
+        <DiscardDialog
+          open={showDiscardDialog}
+          onChange={setShowDiscardDialog}
+          onConfirm={handleDiscardConfirm}
+          title="Unsaved settings"
+          description="You have unsaved settings. Do you want to discard them and close?"
+        />
+      </SidebarProvider>
+    </>
   );
 };
 

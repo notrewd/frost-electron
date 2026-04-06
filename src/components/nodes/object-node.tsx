@@ -76,11 +76,11 @@ const SuggestionItem: FC<{ suggestion: NodeSuggestion }> = ({ suggestion }) => (
       )}
       <span className="font-medium">{suggestion.title}</span>
     </div>
-    <p className="text-muted-foreground whitespace-pre-line pl-[18px]">
+    <p className="text-muted-foreground whitespace-pre-line pl-4.5">
       {suggestion.details}
     </p>
     {suggestion.fix && (
-      <p className="text-muted-foreground pl-[18px] italic">
+      <p className="text-muted-foreground pl-4.5 italic">
         {suggestion.fix}
       </p>
     )}
@@ -100,8 +100,12 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
     compactNodes,
     nodeBorderRadius,
     theme,
-    accessColorLight,
-    accessColorDark,
+    publicAccessColorLight,
+    publicAccessColorDark,
+    privateAccessColorLight,
+    privateAccessColorDark,
+    protectedAccessColorLight,
+    protectedAccessColorDark,
     separatorColorLight,
     separatorColorDark,
     typeColorLight,
@@ -127,8 +131,12 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
       compactNodes: state.compact_nodes,
       nodeBorderRadius: state.node_border_radius,
       theme: state.theme,
-      accessColorLight: state.object_node_access_modifier_color_light,
-      accessColorDark: state.object_node_access_modifier_color_dark,
+      publicAccessColorLight: state.object_node_public_access_color_light,
+      publicAccessColorDark: state.object_node_public_access_color_dark,
+      privateAccessColorLight: state.object_node_private_access_color_light,
+      privateAccessColorDark: state.object_node_private_access_color_dark,
+      protectedAccessColorLight: state.object_node_protected_access_color_light,
+      protectedAccessColorDark: state.object_node_protected_access_color_dark,
       separatorColorLight: state.object_node_type_separator_color_light,
       separatorColorDark: state.object_node_type_separator_color_dark,
       typeColorLight: state.object_node_type_color_light,
@@ -176,10 +184,22 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
     [theme],
   );
 
-  const aColor = useMemo(
+  const publicAColor = useMemo(
     () =>
-      coloredNodes ? (isDark ? accessColorDark : accessColorLight) : undefined,
-    [coloredNodes, isDark, accessColorDark, accessColorLight],
+      coloredNodes ? (isDark ? publicAccessColorDark : publicAccessColorLight) : undefined,
+    [coloredNodes, isDark, publicAccessColorDark, publicAccessColorLight],
+  );
+
+  const privateAColor = useMemo(
+    () =>
+      coloredNodes ? (isDark ? privateAccessColorDark : privateAccessColorLight) : undefined,
+    [coloredNodes, isDark, privateAccessColorDark, privateAccessColorLight],
+  );
+
+  const protectedAColor = useMemo(
+    () =>
+      coloredNodes ? (isDark ? protectedAccessColorDark : protectedAccessColorLight) : undefined,
+    [coloredNodes, isDark, protectedAccessColorDark, protectedAccessColorLight],
   );
 
   const sColor = useMemo(
@@ -227,6 +247,9 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
     () => suggestions.filter((s) => s.severity === "warning").length,
     [suggestions],
   );
+
+  const getAccessColor = (modifier: "public" | "private" | "protected") =>
+    modifier === "public" ? publicAColor : modifier === "private" ? privateAColor : protectedAColor;
 
   const displayedAttributes = useMemo(() => {
     if (!data.attributes) return [];
@@ -325,7 +348,7 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
             )}
             {displayedAttributes.map((attr, index) => (
               <p key={index} className="px-4 flex gap-2 items-center text-nowrap">
-                <span style={coloredNodes ? { color: aColor } : undefined}>
+                <span style={coloredNodes ? { color: getAccessColor(attr.accessModifier) } : undefined}>
                   {attr.accessModifier === "public"
                     ? "+"
                     : attr.accessModifier === "private"
@@ -380,7 +403,7 @@ const ObjectNode: FC<ObjectNodeProps> = ({ id, data, selected }) => {
 
               return (
               <p key={index} className="px-4 flex gap-2 items-center text-nowrap">
-                <span style={coloredNodes ? { color: aColor } : undefined}>
+                <span style={coloredNodes ? { color: getAccessColor(method.accessModifier) } : undefined}>
                   {method.accessModifier === "public"
                     ? "+"
                     : method.accessModifier === "private"

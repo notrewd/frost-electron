@@ -62,8 +62,12 @@ const defaultSettings = {
   snap_to_grid: false,
   grid_size: 15,
   compact_nodes: false,
-  object_node_access_modifier_color_light: "#16a34a",
-  object_node_access_modifier_color_dark: "#4ade80",
+  object_node_public_access_color_light: "#16a34a",
+  object_node_public_access_color_dark: "#4ade80",
+  object_node_private_access_color_light: "#dc2626",
+  object_node_private_access_color_dark: "#f87171",
+  object_node_protected_access_color_light: "#ca8a04",
+  object_node_protected_access_color_dark: "#facc15",
   object_node_type_separator_color_light: "#dc2626",
   object_node_type_separator_color_dark: "#f87171",
   object_node_type_color_light: "#2563eb",
@@ -848,10 +852,18 @@ function setupIPC() {
       snapToGrid: settings.snap_to_grid,
       gridSize: settings.grid_size,
       compactNodes: settings.compact_nodes,
-      objectNodeAccessModifierColorLight:
-        settings.object_node_access_modifier_color_light,
-      objectNodeAccessModifierColorDark:
-        settings.object_node_access_modifier_color_dark,
+      objectNodePublicAccessColorLight:
+        settings.object_node_public_access_color_light,
+      objectNodePublicAccessColorDark:
+        settings.object_node_public_access_color_dark,
+      objectNodePrivateAccessColorLight:
+        settings.object_node_private_access_color_light,
+      objectNodePrivateAccessColorDark:
+        settings.object_node_private_access_color_dark,
+      objectNodeProtectedAccessColorLight:
+        settings.object_node_protected_access_color_light,
+      objectNodeProtectedAccessColorDark:
+        settings.object_node_protected_access_color_dark,
       objectNodeTypeSeparatorColorLight:
         settings.object_node_type_separator_color_light,
       objectNodeTypeSeparatorColorDark:
