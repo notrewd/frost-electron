@@ -710,15 +710,164 @@ const FlowEditor = () => {
 
     const historyUnlisten = listen("request-history", async () => {
       const temporalState = (useFlowStore as any).temporal.getState();
-      const pastLen = temporalState.pastStates.length;
-      const futureLen = temporalState.futureStates.length;
+      const pastStates = temporalState.pastStates;
+      const futureStates = temporalState.futureStates;
+      const pastLen = pastStates.length;
+      const futureLen = futureStates.length;
+      const currentState = {
+        nodes: useFlowStore.getState().nodes,
+        edges: useFlowStore.getState().edges,
+      };
+
+      // Build ordered list of all states
+      const allStates = [
+        ...pastStates,
+        currentState,
+        ...futureStates,
+      ];
+
+      const describeChange = (
+        prev: { nodes: any[]; edges: any[] },
+        next: { nodes: any[]; edges: any[] },
+      ): string => {
+        const prevNodeIds = new Set(prev.nodes.map((n: any) => n.id));
+        const nextNodeIds = new Set(next.nodes.map((n: any) => n.id));
+        const prevEdgeIds = new Set(prev.edges.map((e: any) => e.id));
+        const nextEdgeIds = new Set(next.edges.map((e: any) => e.id));
+
+        const addedNodes = next.nodes.filter((n: any) => !prevNodeIds.has(n.id));
+        const removedNodes = prev.nodes.filter((n: any) => !nextNodeIds.has(n.id));
+        const addedEdges = next.edges.filter((e: any) => !prevEdgeIds.has(e.id));
+        const removedEdges = prev.edges.filter((e: any) => !nextEdgeIds.has(e.id));
+
+        // Check for node data changes (name, attributes, methods, etc.)
+        const modifiedNodes = next.nodes.filter((n: any) => {
+          if (!prevNodeIds.has(n.id)) return false;
+          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
+          if (!prevNode) return false;
+          return JSON.stringify(prevNode.data) !== JSON.stringify(n.data);
+        });
+
+        // Check for grouping changes (parentId)
+        const groupedNodes = next.nodes.filter((n: any) => {
+          if (!prevNodeIds.has(n.id)) return false;
+          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
+          if (!prevNode) return false;
+          return (prevNode.parentId ?? null) !== (n.parentId ?? null);
+        });
+
+        // Check for node position changes
+        const movedNodes = next.nodes.filter((n: any) => {
+          if (!prevNodeIds.has(n.id)) return false;
+          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
+          if (!prevNode) return false;
+          const posChanged =
+            prevNode.position?.x !== n.position?.x ||
+            prevNode.position?.y !== n.position?.y;
+          const dataSame =
+            JSON.stringify(prevNode.data) === JSON.stringify(n.data);
+          return posChanged && dataSame;
+        });
+
+        // Check for edge changes
+        const modifiedEdges = next.edges.filter((e: any) => {
+          if (!prevEdgeIds.has(e.id)) return false;
+          const prevEdge = prev.edges.find((p: any) => p.id === e.id);
+          if (!prevEdge) return false;
+          return JSON.stringify(prevEdge) !== JSON.stringify(e);
+        });
+
+        // Check for any other node property changes (type, style, hidden, etc.)
+        const otherChangedNodes = next.nodes.filter((n: any) => {
+          if (!prevNodeIds.has(n.id)) return false;
+          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
+          if (!prevNode) return false;
+          return JSON.stringify(prevNode) !== JSON.stringify(n);
+        });
+
+        const nodeName = (n: any) => n.data?.name || n.data?.label || "node";
+        const parts: string[] = [];
+
+        if (addedNodes.length === 1) {
+          parts.push(`Added "${nodeName(addedNodes[0])}"`);
+        } else if (addedNodes.length > 1) {
+          parts.push(`Added ${addedNodes.length} nodes`);
+        }
+
+        if (removedNodes.length === 1) {
+          parts.push(`Removed "${nodeName(removedNodes[0])}"`);
+        } else if (removedNodes.length > 1) {
+          parts.push(`Removed ${removedNodes.length} nodes`);
+        }
+
+        if (modifiedNodes.length === 1) {
+          parts.push(`Edited "${nodeName(modifiedNodes[0])}"`);
+        } else if (modifiedNodes.length > 1) {
+          parts.push(`Edited ${modifiedNodes.length} nodes`);
+        }
+
+        if (addedEdges.length > 0) {
+          parts.push(`Added ${addedEdges.length} connection${addedEdges.length > 1 ? "s" : ""}`);
+        }
+
+        if (removedEdges.length > 0) {
+          parts.push(`Removed ${removedEdges.length} connection${removedEdges.length > 1 ? "s" : ""}`);
+        }
+
+        if (modifiedEdges.length > 0) {
+          parts.push(`Changed ${modifiedEdges.length} connection${modifiedEdges.length > 1 ? "s" : ""}`);
+        }
+
+        if (parts.length === 0 && groupedNodes.length > 0) {
+          const gained = groupedNodes.filter(
+            (n: any) => n.parentId && !prev.nodes.find((p: any) => p.id === n.id)?.parentId,
+          );
+          const lost = groupedNodes.filter(
+            (n: any) => !n.parentId && prev.nodes.find((p: any) => p.id === n.id)?.parentId,
+          );
+          if (gained.length > 0) {
+            parts.push(`Grouped ${gained.length} node${gained.length > 1 ? "s" : ""}`);
+          }
+          if (lost.length > 0) {
+            parts.push(`Ungrouped ${lost.length} node${lost.length > 1 ? "s" : ""}`);
+          }
+          if (parts.length === 0) {
+            parts.push(`Regrouped ${groupedNodes.length} node${groupedNodes.length > 1 ? "s" : ""}`);
+          }
+        }
+
+        if (parts.length === 0 && movedNodes.length > 0) {
+          if (movedNodes.length === 1) {
+            parts.push(`Moved "${nodeName(movedNodes[0])}"`);
+          } else {
+            parts.push(`Moved ${movedNodes.length} nodes`);
+          }
+        }
+
+        if (parts.length === 0 && otherChangedNodes.length > 0) {
+          if (otherChangedNodes.length === 1) {
+            parts.push(`Updated "${nodeName(otherChangedNodes[0])}"`);
+          } else {
+            parts.push(`Updated ${otherChangedNodes.length} nodes`);
+          }
+        }
+
+        return parts.length > 0 ? parts.join(", ") : "State change";
+      };
 
       const historyItems = [];
       for (let i = 0; i <= pastLen + futureLen; i++) {
+        let label: string;
+        if (i === 0) {
+          label = "Initial State";
+        } else {
+          label = describeChange(allStates[i - 1], allStates[i]);
+        }
+
         historyItems.push({
           index: i,
           isActive: i === pastLen,
-          label: i === 0 ? "Initial State" : `History State #${i}`,
+          label,
         });
       }
 
