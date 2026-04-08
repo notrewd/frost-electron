@@ -42,9 +42,15 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     ref,
   ) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const steppedRef = React.useRef(false);
 
     const handleIncrement = () => {
       if (disabled) return;
+
+      if (!steppedRef.current) {
+        steppedRef.current = true;
+        props.onFocus?.({} as React.FocusEvent<HTMLInputElement>);
+      }
 
       const currentVal = inputRef.current?.value || "0";
       const current = parseFloat(currentVal);
@@ -67,6 +73,11 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     const handleDecrement = () => {
       if (disabled) return;
 
+      if (!steppedRef.current) {
+        steppedRef.current = true;
+        props.onFocus?.({} as React.FocusEvent<HTMLInputElement>);
+      }
+
       const currentVal = inputRef.current?.value || "0";
       const current = parseFloat(currentVal);
       const next = (isNaN(current) ? 0 : current) - step;
@@ -83,6 +94,16 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange?.(e.target.value);
+    };
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      steppedRef.current = true; // input focused directly, onFocus will fire naturally
+      props.onFocus?.(e);
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      steppedRef.current = false;
+      props.onBlur?.(e);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -118,6 +139,8 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           disabled={disabled}
           className={cn(
             "flex-1 bg-transparent px-3 py-1 outline-none min-w-0 file:text-foreground placeholder:text-muted-foreground w-full",
