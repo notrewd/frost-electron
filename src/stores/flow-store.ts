@@ -16,6 +16,67 @@ function stripForHistory(
   };
 }
 
+/**
+ * Incrementally apply a history state by reusing references for unchanged
+ * nodes/edges.  Only nodes/edges that actually differ get new objects,
+ * so React Flow skips re-rendering anything that hasn't changed.
+ */
+function applyHistoryState(
+  currentNodes: any[],
+  currentEdges: any[],
+  targetNodes: any[],
+  targetEdges: any[],
+): { nodes: any[]; edges: any[] } {
+  const currentNodeMap = new Map(currentNodes.map((n) => [n.id, n]));
+  const currentEdgeMap = new Map(currentEdges.map((e) => [e.id, e]));
+
+  let nodesChanged = targetNodes.length !== currentNodes.length;
+
+  const nodes = targetNodes.map((target) => {
+    const current = currentNodeMap.get(target.id);
+    if (!current) {
+      nodesChanged = true;
+      return target;
+    }
+    // Strip visual-only props from current for structural comparison
+    const {
+      measured,
+      selected,
+      dragging,
+      width,
+      height,
+      ...currentStripped
+    } = current;
+    if (JSON.stringify(currentStripped) === JSON.stringify(target)) {
+      return current; // keep existing reference
+    }
+    nodesChanged = true;
+    // Preserve measured dimensions so React Flow doesn't re-measure
+    return measured ? { ...target, measured } : target;
+  });
+
+  let edgesChanged = targetEdges.length !== currentEdges.length;
+
+  const edges = targetEdges.map((target) => {
+    const current = currentEdgeMap.get(target.id);
+    if (!current) {
+      edgesChanged = true;
+      return target;
+    }
+    const { selected, ...currentStripped } = current;
+    if (JSON.stringify(currentStripped) === JSON.stringify(target)) {
+      return current;
+    }
+    edgesChanged = true;
+    return target;
+  });
+
+  return {
+    nodes: nodesChanged ? nodes : currentNodes,
+    edges: edgesChanged ? edges : currentEdges,
+  };
+}
+
 const useFlowStore = create<FlowState>()((set, get) => ({
   nodes: [],
   edges: [],
@@ -79,10 +140,10 @@ const useFlowStore = create<FlowState>()((set, get) => ({
 
     const previous = _history.past[_history.past.length - 1];
     const current = stripForHistory(previous.label, nodes, edges);
+    const applied = applyHistoryState(nodes, edges, previous.nodes, previous.edges);
 
     set({
-      nodes: previous.nodes as any,
-      edges: previous.edges as any,
+      ...applied,
       _history: {
         past: _history.past.slice(0, -1),
         future: [..._history.future, current],
@@ -96,10 +157,10 @@ const useFlowStore = create<FlowState>()((set, get) => ({
 
     const next = _history.future[_history.future.length - 1];
     const current = stripForHistory(next.label, nodes, edges);
+    const applied = applyHistoryState(nodes, edges, next.nodes, next.edges);
 
     set({
-      nodes: next.nodes as any,
-      edges: next.edges as any,
+      ...applied,
       _history: {
         past: [..._history.past, current],
         future: _history.future.slice(0, -1),
@@ -130,9 +191,9 @@ const useFlowStore = create<FlowState>()((set, get) => ({
       return;
 
     const targetState = allStates[targetIndex];
+    const applied = applyHistoryState(nodes, edges, targetState.nodes, targetState.edges);
     set({
-      nodes: targetState.nodes as any,
-      edges: targetState.edges as any,
+      ...applied,
       _history: {
         past: allStates.slice(0, targetIndex),
         future: allStates.slice(targetIndex + 1),
