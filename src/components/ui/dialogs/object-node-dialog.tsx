@@ -89,6 +89,7 @@ const ObjectNodeDialog: FC<ObjectNodeDialogProps> = ({
   const hasChanges = JSON.stringify(internalData) !== JSON.stringify(data);
 
   const handleApply = () => {
+    useFlowStore.getState().saveSnapshot("Edit node");
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === id) {

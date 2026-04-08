@@ -39,6 +39,7 @@ const NoteNodeDialog: FC<NoteNodeDialogProps> = ({
   const hasChanges = JSON.stringify(internalData) !== JSON.stringify(data);
 
   const handleApply = () => {
+    useFlowStore.getState().saveSnapshot("Edit note");
     const concatenatedNote =
       internalData.note.length > 50
         ? internalData.note.slice(0, 50) + "..."

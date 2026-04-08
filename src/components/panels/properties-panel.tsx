@@ -90,14 +90,7 @@ const PropertiesPanel: FC = () => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
   const handleInputFocus = () => {
-    useFlowStore.temporal.getState().pause();
-  };
-
-  const handleInputBlur = () => {
-    useFlowStore.temporal.getState().resume();
-    // Force a new array reference so zundo detects the state change
-    setNodes((nodes) => [...nodes]);
-    setEdges((edges) => [...edges]);
+    useFlowStore.getState().saveSnapshot("Edit properties");
   };
 
   const bulkNodeX = useMemo(() => {
@@ -153,12 +146,8 @@ const PropertiesPanel: FC = () => {
   }, [selectedEdges]);
 
   useEffect(() => {
-    const temporalState = useFlowStore.temporal.getState();
-
     if (colorPickerOpen) {
-      temporalState.pause();
-    } else {
-      temporalState.resume();
+      useFlowStore.getState().saveSnapshot("Change color");
     }
   }, [colorPickerOpen]);
 
@@ -267,6 +256,7 @@ const PropertiesPanel: FC = () => {
   };
 
   const handleReverseEdges = () => {
+    useFlowStore.getState().saveSnapshot("Reverse edges");
     setEdges((prevEdges) =>
       prevEdges.map((edge) =>
         edge.selected
@@ -334,7 +324,7 @@ const PropertiesPanel: FC = () => {
                 placeholder={bulkNodeX === "" ? "Mixed" : ""}
                 onChange={(val) => handleBulkNodePositionChange("x", val)}
                 onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
+
                 variant="small"
                 step={10}
               />
@@ -345,7 +335,7 @@ const PropertiesPanel: FC = () => {
                 placeholder={bulkNodeY === "" ? "Mixed" : ""}
                 onChange={(val) => handleBulkNodePositionChange("y", val)}
                 onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
+
                 variant="small"
                 step={10}
               />
@@ -368,7 +358,7 @@ const PropertiesPanel: FC = () => {
                   placeholder="Group Name"
                   onChange={(e) => handleGroupNameChange(e.target.value)}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -408,7 +398,7 @@ const PropertiesPanel: FC = () => {
                         }
                         onChange={(e) => handleGroupColorChange(e.target.value)}
                         onFocus={handleInputFocus}
-                        onBlur={handleInputBlur}
+        
                       />
                     </div>
                   </PopoverContent>
@@ -448,7 +438,7 @@ const PropertiesPanel: FC = () => {
                     );
                   }}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -515,7 +505,7 @@ const PropertiesPanel: FC = () => {
                     );
                   }}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -550,7 +540,7 @@ const PropertiesPanel: FC = () => {
                     );
                   }}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -585,7 +575,7 @@ const PropertiesPanel: FC = () => {
                     );
                   }}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -650,7 +640,7 @@ const PropertiesPanel: FC = () => {
                   }
                   onChange={(e) => handleBulkEdgeLabelChange(e.target.value)}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -677,7 +667,7 @@ const PropertiesPanel: FC = () => {
                     )
                   }
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>
@@ -696,7 +686,7 @@ const PropertiesPanel: FC = () => {
                     )
                   }
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+  
                   variant="small"
                 />
               </PropRow>

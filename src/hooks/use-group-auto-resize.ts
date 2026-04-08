@@ -226,9 +226,6 @@ export function useGroupAutoResize() {
 
       isUpdatingRef.current = true;
 
-      const temporalState = (useFlowStore as any).temporal?.getState();
-      if (temporalState) temporalState.pause();
-
       useFlowStore.getState().setNodes((currentNodes) =>
         currentNodes.map((node) => {
           const upd = updates.get(node.id);
@@ -240,10 +237,6 @@ export function useGroupAutoResize() {
           };
         }),
       );
-
-      if (temporalState) {
-        setTimeout(() => temporalState.resume(), 50);
-      }
 
       // Let the store settle before allowing the next pass
       requestAnimationFrame(() => {

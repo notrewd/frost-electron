@@ -69,6 +69,7 @@ const GroupNode: FC<GroupNodeProps> = ({ id, data, selected }) => {
   }, [id]);
 
   const handleDelete = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Delete group");
     setNodes((currentNodes) => {
       // Find all groups that are selected or the current group
       const groupsToDelete = currentNodes
@@ -89,6 +90,7 @@ const GroupNode: FC<GroupNodeProps> = ({ id, data, selected }) => {
   }, [setNodes, id]);
 
   const handleUngroup = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Ungroup nodes");
     setNodes((prevNodes) => {
       const groupNode = prevNodes.find((n) => n.id === id);
       if (!groupNode) return prevNodes;
@@ -155,10 +157,6 @@ const GroupNode: FC<GroupNodeProps> = ({ id, data, selected }) => {
       const hDiff = Math.abs((Number(node.style?.height) || 0) - targetHeight);
 
       if (wDiff > 1 || hDiff > 1 || visualLeft !== 0 || visualTop !== 0) {
-        // Pause undo/redo tracking for auto-bounds adjustment
-        const temporalState = (useFlowStore as any).temporal?.getState();
-        if (temporalState) temporalState.pause();
-
         let targetX = currentX;
         let targetY = currentY;
         let childrenUpdateMaps = [] as any[];
@@ -205,11 +203,6 @@ const GroupNode: FC<GroupNodeProps> = ({ id, data, selected }) => {
 
           return n;
         });
-
-        // Resume temporal tracking shortly after the state is updated
-        if (temporalState) {
-          setTimeout(() => temporalState.resume(), 50);
-        }
 
         return nextNodes;
       }

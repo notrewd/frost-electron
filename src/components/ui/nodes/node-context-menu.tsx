@@ -106,6 +106,7 @@ export const NodeContextMenuGroupOption: FC<NodeContextMenuOptionProps> = ({
   const setNodes = useFlowStore((state) => state.setNodes);
 
   const handleGroup = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Group nodes");
     const { nodes } = useFlowStore.getState();
     const selectedNodesAll = nodes.filter(
       (node) => node.selected || node.id === nodeId,
@@ -205,8 +206,8 @@ export const NodeContextMenuUngroupOption: FC<NodeContextMenuOptionProps> = ({
   const setNodes = useFlowStore((state) => state.setNodes);
 
   const handleUngroup = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Ungroup nodes");
     const { nodes } = useFlowStore.getState();
-    // If part of a group, remove just these from the group
     const targetNodes = nodes.filter(
       (node) => node.selected || node.id === nodeId,
     );
@@ -264,6 +265,7 @@ export const NodeContextMenuDeleteOption: FC<NodeContextMenuOptionProps> = ({
   const setNodes = useFlowStore((state) => state.setNodes);
 
   const handleDelete = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Delete node");
     const { nodes } = useFlowStore.getState();
     const nodesToDelete = nodes
       .filter((node) => node.selected || node.id === nodeId)

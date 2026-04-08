@@ -160,6 +160,7 @@ const EditorRoute = () => {
 
         if (totalItems === 0) return;
 
+        useFlowStore.getState().saveSnapshot("Generate diagram");
         const BATCH_SIZE = 5;
         let spawned = 0;
 
@@ -367,6 +368,7 @@ const EditorRoute = () => {
     pasteCountRef.current = 0;
     setState((prev) => ({ ...prev, canPaste: true }));
 
+    useFlowStore.getState().saveSnapshot("Cut nodes");
     setNodes((nodes) => nodes.filter((node) => !selectedIds.has(node.id)));
     setEdges((edges) =>
       edges.filter(
@@ -382,6 +384,8 @@ const EditorRoute = () => {
     if (!clipboard || clipboard.nodes.length === 0) {
       return;
     }
+
+    useFlowStore.getState().saveSnapshot("Paste nodes");
 
     pasteCountRef.current += 1;
     const offset = 24 * pasteCountRef.current;
@@ -585,6 +589,7 @@ const EditorRoute = () => {
         .toString(36)
         .slice(2, 8)}`;
 
+      useFlowStore.getState().saveSnapshot("Add node");
       setNodes((nds) => [
         ...nds,
         {
@@ -623,6 +628,7 @@ const EditorRoute = () => {
           })
         : { x: -x / zoom, y: -y / zoom };
 
+      useFlowStore.getState().saveSnapshot("Add node");
       setNodes((nds) => {
         // Deselect all other nodes
         const unselectedNodes = nds.map((node) => ({

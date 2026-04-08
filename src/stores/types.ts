@@ -7,20 +7,34 @@ import {
   ReactFlowInstance,
 } from "@xyflow/react";
 
+export interface HistoryEntry {
+  label: string;
+  nodes: any[];
+  edges: any[];
+}
+
 export interface FlowState {
   nodes: Node<ObjectNodeData>[];
   edges: Edge[];
   instance: ReactFlowInstance<Node<ObjectNodeData>, Edge> | null;
+  _history: { past: HistoryEntry[]; future: HistoryEntry[] };
   onNodesChange: OnNodesChange<Node<ObjectNodeData>>;
   onEdgesChange: OnEdgesChange;
   onConnect: (edge: Edge) => void;
   setNodes: (
-    fn: (prev: Node<ObjectNodeData>[]) => Node<ObjectNodeData>[],
+    fn:
+      | ((prev: Node<ObjectNodeData>[]) => Node<ObjectNodeData>[])
+      | Node<ObjectNodeData>[],
   ) => void;
   setEdges: (fn: (prev: Edge[]) => Edge[]) => void;
   setInstance: (
     instance: ReactFlowInstance<Node<ObjectNodeData>, Edge>,
   ) => void;
+  saveSnapshot: (label: string) => void;
+  undo: () => void;
+  redo: () => void;
+  clearHistory: () => void;
+  jumpToHistory: (index: number) => void;
 }
 
 export interface ProjectState {

@@ -17,7 +17,6 @@ import {emit, listen} from "@/lib/electron/events";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {invoke} from "@/lib/electron/invoke";
 import {toPng} from "html-to-image";
-import {useStore} from "zustand";
 import {Button} from "./button";
 import {Download, Focus, FolderPlus, Redo, Trash2, Undo} from "lucide-react";
 import {useProjectStore} from "@/stores/project-store";
@@ -219,34 +218,29 @@ const FlowEditor = () => {
     })),
   );
 
-  // Undo/Redo hooks
   const {
     undo,
     redo,
-    pause,
-    resume,
-    clear,
+    saveSnapshot,
+    clearHistory,
     canUndo,
     canRedo,
     pastLen,
     futureLen,
-  } = useStore(
-    (useFlowStore as any).temporal,
-    useShallow((state: any) => ({
+  } = useFlowStore(
+    useShallow((state: FlowState) => ({
       undo: state.undo,
       redo: state.redo,
-      pause: state.pause,
-      resume: state.resume,
-      clear: state.clear,
-      canUndo: state.pastStates.length > 0,
-      canRedo: state.futureStates.length > 0,
-      pastLen: state.pastStates.length,
-      futureLen: state.futureStates.length,
+      saveSnapshot: state.saveSnapshot,
+      clearHistory: state.clearHistory,
+      canUndo: state._history.past.length > 0,
+      canRedo: state._history.future.length > 0,
+      pastLen: state._history.past.length,
+      futureLen: state._history.future.length,
     })),
   );
 
   useEffect(() => {
-    // Broadcast history whenever it changes
     emit("request-history");
   }, [pastLen, futureLen]);
   const { setCanUndo, setCanRedo } = useProjectStore(
@@ -287,13 +281,8 @@ const FlowEditor = () => {
   }, [canUndo, canRedo, setCanUndo, setCanRedo]);
 
   const onNodeDragStart = useCallback(() => {
-    // Pause history recording during drag to avoid excessive states
-    pause();
-  }, [pause]);
-
-  const onNodeDragStop = useCallback(() => {
-    resume();
-  }, [resume]);
+    saveSnapshot("Move node");
+  }, [saveSnapshot]);
   useEffect(() => {
     console.log(theme, panOnScroll, showMinimap);
   }, [theme, panOnScroll, showMinimap]);
@@ -338,7 +327,6 @@ const FlowEditor = () => {
         const flowData = JSON.parse(data);
         if (!flowData) return;
 
-        pause();
         setNodes(() => flowData.nodes || []);
         setEdges(() => flowData.edges || []);
 
@@ -347,11 +335,7 @@ const FlowEditor = () => {
           useLayoutStore.getState().setPositions(flowData.panelLayout);
         }
 
-        // Wait a tick for state to update, then clear history and resume
-        setTimeout(() => {
-          clear();
-          resume();
-        }, 0);
+        setTimeout(() => clearHistory(), 0);
       } catch (error) {
         console.error("Failed to fetch project data:", error);
       } finally {
@@ -368,14 +352,11 @@ const FlowEditor = () => {
         const { data } = event.payload;
         setLoading(true);
 
-        pause();
-
         if (!data) {
           setNodes(() => []);
           setEdges(() => []);
           setTimeout(() => {
-            clear();
-            resume();
+            clearHistory();
             loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
           }, 0);
           return;
@@ -385,8 +366,7 @@ const FlowEditor = () => {
           const flowData = JSON.parse(data);
           if (!flowData) {
             setTimeout(() => {
-              clear();
-              resume();
+              clearHistory();
               loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
             }, 0);
             return;
@@ -401,15 +381,13 @@ const FlowEditor = () => {
           }
 
           setTimeout(() => {
-            clear();
-            resume();
+            clearHistory();
             loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
           }, 0);
         } catch (error) {
           console.error("Failed to load project data:", error);
           setTimeout(() => {
-            clear();
-            resume();
+            clearHistory();
             loadingTimerRef.current = setTimeout(() => setLoading(false), 300);
           }, 0);
         }
@@ -709,159 +687,22 @@ const FlowEditor = () => {
     });
 
     const historyUnlisten = listen("request-history", async () => {
-      const temporalState = (useFlowStore as any).temporal.getState();
-      const pastStates = temporalState.pastStates;
-      const futureStates = temporalState.futureStates;
-      const pastLen = pastStates.length;
-      const futureLen = futureStates.length;
-      const currentState = {
-        nodes: useFlowStore.getState().nodes,
-        edges: useFlowStore.getState().edges,
-      };
+      const { _history } = useFlowStore.getState();
+      const pastLen = _history.past.length;
+      const futureLen = _history.future.length;
 
-      // Build ordered list of all states
-      const allStates = [
-        ...pastStates,
-        currentState,
-        ...futureStates,
-      ];
-
-      const describeChange = (
-        prev: { nodes: any[]; edges: any[] },
-        next: { nodes: any[]; edges: any[] },
-      ): string => {
-        const prevNodeIds = new Set(prev.nodes.map((n: any) => n.id));
-        const nextNodeIds = new Set(next.nodes.map((n: any) => n.id));
-        const prevEdgeIds = new Set(prev.edges.map((e: any) => e.id));
-        const nextEdgeIds = new Set(next.edges.map((e: any) => e.id));
-
-        const addedNodes = next.nodes.filter((n: any) => !prevNodeIds.has(n.id));
-        const removedNodes = prev.nodes.filter((n: any) => !nextNodeIds.has(n.id));
-        const addedEdges = next.edges.filter((e: any) => !prevEdgeIds.has(e.id));
-        const removedEdges = prev.edges.filter((e: any) => !nextEdgeIds.has(e.id));
-
-        // Check for node data changes (name, attributes, methods, etc.)
-        const modifiedNodes = next.nodes.filter((n: any) => {
-          if (!prevNodeIds.has(n.id)) return false;
-          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
-          if (!prevNode) return false;
-          return JSON.stringify(prevNode.data) !== JSON.stringify(n.data);
-        });
-
-        // Check for grouping changes (parentId)
-        const groupedNodes = next.nodes.filter((n: any) => {
-          if (!prevNodeIds.has(n.id)) return false;
-          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
-          if (!prevNode) return false;
-          return (prevNode.parentId ?? null) !== (n.parentId ?? null);
-        });
-
-        // Check for node position changes
-        const movedNodes = next.nodes.filter((n: any) => {
-          if (!prevNodeIds.has(n.id)) return false;
-          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
-          if (!prevNode) return false;
-          const posChanged =
-            prevNode.position?.x !== n.position?.x ||
-            prevNode.position?.y !== n.position?.y;
-          const dataSame =
-            JSON.stringify(prevNode.data) === JSON.stringify(n.data);
-          return posChanged && dataSame;
-        });
-
-        // Check for edge changes
-        const modifiedEdges = next.edges.filter((e: any) => {
-          if (!prevEdgeIds.has(e.id)) return false;
-          const prevEdge = prev.edges.find((p: any) => p.id === e.id);
-          if (!prevEdge) return false;
-          return JSON.stringify(prevEdge) !== JSON.stringify(e);
-        });
-
-        // Check for any other node property changes (type, style, hidden, etc.)
-        const otherChangedNodes = next.nodes.filter((n: any) => {
-          if (!prevNodeIds.has(n.id)) return false;
-          const prevNode = prev.nodes.find((p: any) => p.id === n.id);
-          if (!prevNode) return false;
-          return JSON.stringify(prevNode) !== JSON.stringify(n);
-        });
-
-        const nodeName = (n: any) => n.data?.name || n.data?.label || "node";
-        const parts: string[] = [];
-
-        if (addedNodes.length === 1) {
-          parts.push(`Added "${nodeName(addedNodes[0])}"`);
-        } else if (addedNodes.length > 1) {
-          parts.push(`Added ${addedNodes.length} nodes`);
-        }
-
-        if (removedNodes.length === 1) {
-          parts.push(`Removed "${nodeName(removedNodes[0])}"`);
-        } else if (removedNodes.length > 1) {
-          parts.push(`Removed ${removedNodes.length} nodes`);
-        }
-
-        if (modifiedNodes.length === 1) {
-          parts.push(`Edited "${nodeName(modifiedNodes[0])}"`);
-        } else if (modifiedNodes.length > 1) {
-          parts.push(`Edited ${modifiedNodes.length} nodes`);
-        }
-
-        if (addedEdges.length > 0) {
-          parts.push(`Added ${addedEdges.length} connection${addedEdges.length > 1 ? "s" : ""}`);
-        }
-
-        if (removedEdges.length > 0) {
-          parts.push(`Removed ${removedEdges.length} connection${removedEdges.length > 1 ? "s" : ""}`);
-        }
-
-        if (modifiedEdges.length > 0) {
-          parts.push(`Changed ${modifiedEdges.length} connection${modifiedEdges.length > 1 ? "s" : ""}`);
-        }
-
-        if (parts.length === 0 && groupedNodes.length > 0) {
-          const gained = groupedNodes.filter(
-            (n: any) => n.parentId && !prev.nodes.find((p: any) => p.id === n.id)?.parentId,
-          );
-          const lost = groupedNodes.filter(
-            (n: any) => !n.parentId && prev.nodes.find((p: any) => p.id === n.id)?.parentId,
-          );
-          if (gained.length > 0) {
-            parts.push(`Grouped ${gained.length} node${gained.length > 1 ? "s" : ""}`);
-          }
-          if (lost.length > 0) {
-            parts.push(`Ungrouped ${lost.length} node${lost.length > 1 ? "s" : ""}`);
-          }
-          if (parts.length === 0) {
-            parts.push(`Regrouped ${groupedNodes.length} node${groupedNodes.length > 1 ? "s" : ""}`);
-          }
-        }
-
-        if (parts.length === 0 && movedNodes.length > 0) {
-          if (movedNodes.length === 1) {
-            parts.push(`Moved "${nodeName(movedNodes[0])}"`);
-          } else {
-            parts.push(`Moved ${movedNodes.length} nodes`);
-          }
-        }
-
-        if (parts.length === 0 && otherChangedNodes.length > 0) {
-          if (otherChangedNodes.length === 1) {
-            parts.push(`Updated "${nodeName(otherChangedNodes[0])}"`);
-          } else {
-            parts.push(`Updated ${otherChangedNodes.length} nodes`);
-          }
-        }
-
-        return parts.length > 0 ? parts.join(", ") : "State change";
-      };
-
+      // Each past[i] snapshot was taken BEFORE an action with past[i].label.
+      // So the state at index i+1 was produced by past[i].label.
+      // Future entries have labels from when they were pushed during undo.
       const historyItems = [];
       for (let i = 0; i <= pastLen + futureLen; i++) {
         let label: string;
         if (i === 0) {
           label = "Initial State";
+        } else if (i <= pastLen) {
+          label = _history.past[i - 1]?.label || "Change";
         } else {
-          label = describeChange(allStates[i - 1], allStates[i]);
+          label = _history.future[i - pastLen - 1]?.label || "Change";
         }
 
         historyItems.push({
@@ -877,22 +718,8 @@ const FlowEditor = () => {
     const historyJumpUnlisten = listen<{ index: number }>(
       "history-jump",
       async (event) => {
-        const targetIndex = event.payload.index;
-        const temporalState = (useFlowStore as any).temporal.getState();
-        const currentIndex = temporalState.pastStates.length;
-
-        const distance = currentIndex - targetIndex;
-
-        if (distance > 0) {
-          temporalState.undo(distance);
-        } else if (distance < 0) {
-          temporalState.redo(Math.abs(distance));
-        }
-
-        // Emit updated history after state changes
-        setTimeout(() => {
-          emit("request-history");
-        }, 10);
+        useFlowStore.getState().jumpToHistory(event.payload.index);
+        setTimeout(() => emit("request-history"), 10);
       },
     );
 
@@ -900,6 +727,7 @@ const FlowEditor = () => {
       "update-edge-type",
       async (event) => {
         const { id, type } = event.payload;
+        useFlowStore.getState().saveSnapshot("Change edge type");
         const currentEdges = useFlowStore.getState().edges;
         const newEdges = currentEdges.map((e) =>
           e.id === id ? { ...e, type } : e,
@@ -913,6 +741,7 @@ const FlowEditor = () => {
       "delete-edge",
       async (event) => {
         const { id } = event.payload;
+        useFlowStore.getState().saveSnapshot("Delete edge");
         const currentEdges = useFlowStore.getState().edges;
         const newEdges = currentEdges.filter((e) => e.id !== id);
         useFlowStore.getState().setEdges(() => newEdges);
@@ -996,6 +825,7 @@ const FlowEditor = () => {
         );
 
         if (layouted) {
+          useFlowStore.getState().saveSnapshot("Arrange nodes");
           useFlowStore.getState().setNodes(() => layouted.nodes);
           useFlowStore.getState().setEdges(() => layouted.edges);
 
@@ -1014,6 +844,7 @@ const FlowEditor = () => {
         const { view } = event.payload;
         const currentNodes = useFlowStore.getState().nodes;
         
+        useFlowStore.getState().saveSnapshot("Transform nodes");
         const newNodes = currentNodes.map((node) => {
           if (node.type === "object") {
             return {
@@ -1081,6 +912,7 @@ const FlowEditor = () => {
   }, []);
 
   const handleSelectionGroup = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Group selection");
     const { nodes: currentFlowNodes, setNodes } = useFlowStore.getState();
     const selectedNodesAll = currentFlowNodes.filter((node) => node.selected);
     if (selectedNodesAll.length === 0) return;
@@ -1178,6 +1010,7 @@ const FlowEditor = () => {
   }, []);
 
   const handleSelectionDelete = useCallback(() => {
+    useFlowStore.getState().saveSnapshot("Delete selection");
     const { setNodes, setEdges } = useFlowStore.getState();
     setNodes((nodes) => nodes.filter((node) => !node.selected));
     setEdges((edges) => edges.filter((edge) => !edge.selected));
@@ -1195,6 +1028,8 @@ const FlowEditor = () => {
   const addEdge = useCallback(
     (edgeType: string, marker: MarkerType) => {
       if (!currentConnection) return;
+
+      saveSnapshot("Add connection");
 
       const edge: Edge = {
         id: `${currentConnection.source}-${currentConnection.sourceHandle}-${currentConnection.target}-${currentConnection.targetHandle}`,
@@ -1215,7 +1050,7 @@ const FlowEditor = () => {
       setEdgeTypesMenuPosition(null);
       setCurrentConnection(null);
     },
-    [onConnect, currentConnection],
+    [onConnect, currentConnection, saveSnapshot],
   );
 
   const snapGrid = useMemo(
@@ -1252,7 +1087,6 @@ const FlowEditor = () => {
         onSelectionContextMenu={handleSelectionContextMenu}
         onInit={(instance) => setInstance(instance as any)}
         onNodeDragStart={onNodeDragStart}
-        onNodeDragStop={onNodeDragStop}
         snapToGrid={snapToGrid}
         snapGrid={snapGrid}
         proOptions={proOptions}

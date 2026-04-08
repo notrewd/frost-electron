@@ -125,6 +125,7 @@ const ProjectPanel = () => {
 
   const handleDelete = useCallback(
     (id: string) => {
+      useFlowStore.getState().saveSnapshot("Delete node");
       setNodes((nodes) => nodes.filter((node) => node.id !== id));
       setEdges((edges) =>
         edges.filter((edge) => edge.source !== id && edge.target !== id),
@@ -135,6 +136,7 @@ const ProjectPanel = () => {
 
   const handleGroup = useCallback(
     (items: TreeViewItem[]) => {
+      useFlowStore.getState().saveSnapshot("Group nodes");
       const itemIds = items.map((item) => item.id);
       const selectedNodes = useFlowStore.getState().nodes.filter((n) => itemIds.includes(n.id));
       if (selectedNodes.length === 0) return;
@@ -202,6 +204,7 @@ const ProjectPanel = () => {
 
   const handleUngroup = useCallback(
     (items: TreeViewItem[]) => {
+      useFlowStore.getState().saveSnapshot("Ungroup nodes");
       const itemIds = items.map((item) => item.id);
 
       setNodes((currentNodes) => {
@@ -246,6 +249,7 @@ const ProjectPanel = () => {
 
   const handleDataChange = useCallback(
     (newData: TreeViewItem[]) => {
+      useFlowStore.getState().saveSnapshot("Reorder nodes");
       const newParentMap = new Map<string, string | undefined>();
 
       const walk = (items: TreeViewItem[], parentId: string | undefined) => {
