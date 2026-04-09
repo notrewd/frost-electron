@@ -1,28 +1,74 @@
 name: Build/release
 
-on: push
+on:
+  push:
+    branches:
+      - master
 
 jobs:
-  release:
+  build:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v4
 
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v6.3.0
-
-      - name: Build/release Electron app
-        uses: paneron/action-electron-builder@v1.8.1
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.github_token }}
+          node-version: 20
+          cache: npm
 
-          # Release the app after a successful build
-          release: true
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Electron app
+        run: npm run build:electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: |
+            release/*.dmg
+            release/*.exe
+            release/*.AppImage
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v$(node -p "require('./package.json').version")" \
+            --draft \
+            --title "v$(node -p "require('./package.json').version")" \
+            --generate-notes \
+            artifacts/*
