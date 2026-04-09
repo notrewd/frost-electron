@@ -69,6 +69,7 @@ export const NodeContextMenuFocusOption: FC<NodeContextMenuOptionProps> = ({
       nodes: nodes
         .filter((node) => node.selected || node.id === nodeId)
         .map((node) => ({ id: node.id })),
+      duration: 500,
     });
   }, [instance, nodeId]);
 

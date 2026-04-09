@@ -56,6 +56,7 @@ const GroupNode: FC<GroupNodeProps> = ({ id, data, selected }) => {
       nodes: currentNodes
         .filter((node) => node.selected || node.id === id)
         .map((node) => ({ id: node.id })),
+      duration: 500,
     });
   }, [instance, id]);
 

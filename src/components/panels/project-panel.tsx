@@ -362,6 +362,7 @@ const ProjectPanel = () => {
         action: (items: TreeViewItem[]) => {
           instance?.fitView({
             nodes: items.map((item) => ({ id: item.id })),
+            duration: 500,
           });
         },
       },

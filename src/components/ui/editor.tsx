@@ -283,6 +283,22 @@ const FlowEditor = () => {
   const onNodeDragStart = useCallback(() => {
     saveSnapshot("Move node");
   }, [saveSnapshot]);
+
+  const onBeforeDelete = useCallback(
+    async ({ nodes: delNodes, edges: delEdges }: { nodes: any[]; edges: any[] }) => {
+      const hasNodes = delNodes.length > 0;
+      const hasEdges = delEdges.length > 0;
+      if (hasNodes && hasEdges) {
+        saveSnapshot("Delete selection");
+      } else if (hasNodes) {
+        saveSnapshot(delNodes.length > 1 ? "Delete nodes" : "Delete node");
+      } else if (hasEdges) {
+        saveSnapshot(delEdges.length > 1 ? "Delete edges" : "Delete edge");
+      }
+      return true;
+    },
+    [saveSnapshot],
+  );
   useEffect(() => {
     console.log(theme, panOnScroll, showMinimap);
   }, [theme, panOnScroll, showMinimap]);
@@ -687,9 +703,80 @@ const FlowEditor = () => {
     });
 
     const historyUnlisten = listen("request-history", async () => {
-      const { _history } = useFlowStore.getState();
+      const { nodes: currentNodes, edges: currentEdges, _history } = useFlowStore.getState();
       const pastLen = _history.past.length;
       const futureLen = _history.future.length;
+
+      // Build ordered list of snapshots so we can diff consecutive states.
+      // past[0], past[1], ..., <current>, future[0], future[1], ...
+      const allSnapshots: { nodes: any[]; edges: any[] }[] = _history.past.map(
+        (e) => ({ nodes: e.nodes, edges: e.edges }),
+      );
+      allSnapshots.push({ nodes: currentNodes, edges: currentEdges });
+      for (const e of _history.future) {
+        allSnapshots.push({ nodes: e.nodes, edges: e.edges });
+      }
+
+      function describeChanges(
+        prev: { nodes: any[]; edges: any[] },
+        next: { nodes: any[]; edges: any[] },
+      ): string {
+        const prevIds = new Set(prev.nodes.map((n: any) => n.id));
+        const nextIds = new Set(next.nodes.map((n: any) => n.id));
+        const prevNodeMap = new Map(prev.nodes.map((n: any) => [n.id, n]));
+        const nextNodeMap = new Map(next.nodes.map((n: any) => [n.id, n]));
+
+        const parts: string[] = [];
+
+        // Added nodes
+        const added = next.nodes.filter((n: any) => !prevIds.has(n.id));
+        if (added.length > 0) {
+          const names = added.map((n: any) => n.data?.name || n.type || "node").slice(0, 3);
+          parts.push(`+${names.join(", ")}${added.length > 3 ? ` (+${added.length - 3} more)` : ""}`);
+        }
+
+        // Removed nodes
+        const removed = prev.nodes.filter((n: any) => !nextIds.has(n.id));
+        if (removed.length > 0) {
+          const names = removed.map((n: any) => n.data?.name || n.type || "node").slice(0, 3);
+          parts.push(`-${names.join(", ")}${removed.length > 3 ? ` (+${removed.length - 3} more)` : ""}`);
+        }
+
+        // Modified nodes (same id, different data or position)
+        const modified: string[] = [];
+        const moved: string[] = [];
+        for (const [id, nextNode] of nextNodeMap) {
+          const prevNode = prevNodeMap.get(id);
+          if (!prevNode) continue;
+          const dataChanged = JSON.stringify(prevNode.data) !== JSON.stringify(nextNode.data);
+          const posChanged =
+            prevNode.position?.x !== nextNode.position?.x ||
+            prevNode.position?.y !== nextNode.position?.y;
+          if (dataChanged) {
+            modified.push(nextNode.data?.name || nextNode.type || "node");
+          } else if (posChanged) {
+            moved.push(nextNode.data?.name || nextNode.type || "node");
+          }
+        }
+        if (modified.length > 0) {
+          const names = modified.slice(0, 3);
+          parts.push(`~${names.join(", ")}${modified.length > 3 ? ` (+${modified.length - 3} more)` : ""}`);
+        }
+        if (moved.length > 0 && added.length === 0 && removed.length === 0) {
+          const names = moved.slice(0, 3);
+          parts.push(`moved ${names.join(", ")}${moved.length > 3 ? ` (+${moved.length - 3} more)` : ""}`);
+        }
+
+        // Edge changes
+        const prevEdgeIds = new Set(prev.edges.map((e: any) => e.id));
+        const nextEdgeIds = new Set(next.edges.map((e: any) => e.id));
+        const addedEdges = next.edges.filter((e: any) => !prevEdgeIds.has(e.id)).length;
+        const removedEdges = prev.edges.filter((e: any) => !nextEdgeIds.has(e.id)).length;
+        if (addedEdges > 0) parts.push(`+${addedEdges} edge${addedEdges > 1 ? "s" : ""}`);
+        if (removedEdges > 0) parts.push(`-${removedEdges} edge${removedEdges > 1 ? "s" : ""}`);
+
+        return parts.join(", ");
+      }
 
       // Each past[i] snapshot was taken BEFORE an action with past[i].label.
       // So the state at index i+1 was produced by past[i].label.
@@ -705,10 +792,13 @@ const FlowEditor = () => {
           label = _history.future[i - pastLen - 1]?.label || "Change";
         }
 
+        const details = i > 0 ? describeChanges(allSnapshots[i - 1], allSnapshots[i]) : "";
+
         historyItems.push({
           index: i,
           isActive: i === pastLen,
           label,
+          details,
         });
       }
 
@@ -1005,6 +1095,7 @@ const FlowEditor = () => {
       nodes: currentFlowNodes
         .filter((node) => node.selected)
         .map((n) => ({ id: n.id })),
+      duration: 500,
     });
     setSelectionMenuPosition(null);
   }, []);
@@ -1087,6 +1178,7 @@ const FlowEditor = () => {
         onSelectionContextMenu={handleSelectionContextMenu}
         onInit={(instance) => setInstance(instance as any)}
         onNodeDragStart={onNodeDragStart}
+        onBeforeDelete={onBeforeDelete}
         snapToGrid={snapToGrid}
         snapGrid={snapGrid}
         proOptions={proOptions}

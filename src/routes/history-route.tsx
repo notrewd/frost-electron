@@ -10,6 +10,7 @@ interface HistoryItem {
   index: number;
   label: string;
   isActive: boolean;
+  details?: string;
 }
 
 const HistoryRoute = () => {
@@ -85,19 +86,26 @@ const HistoryRoute = () => {
               >
                 <div className="flex items-center gap-3">
                   {item.isActive ? (
-                    <CircleDot className="size-4 text-primary" />
+                    <CircleDot className="size-4 shrink-0 text-primary" />
                   ) : (
-                    <div className="size-4 rounded-full border-2 border-muted-foreground" />
+                    <div className="size-4 shrink-0 rounded-full border-2 border-muted-foreground" />
                   )}
-                  <span
-                    className={`text-sm ${
-                      item.isActive
-                        ? "font-semibold text-primary"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                  <div className="flex flex-col">
+                    <span
+                      className={`text-sm ${
+                        item.isActive
+                          ? "font-semibold text-primary"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                    {item.details && (
+                      <span className="text-xs text-muted-foreground">
+                        {item.details}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <Button
