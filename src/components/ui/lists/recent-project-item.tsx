@@ -1,5 +1,5 @@
 import { RecentProject } from "@/types/app";
-import { FC, useCallback } from "react";
+import { FC, useCallback, useState } from "react";
 import { Button } from "../button";
 import { Ellipsis, Folder, Trash } from "lucide-react";
 import { invoke } from "@/lib/electron/invoke";
@@ -11,6 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "../dropdown-menu";
 import { revealItemInDir } from "@/lib/electron/shell";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../dialog";
 
 interface RecentProjectItemProps {
   recentProject: RecentProject;
@@ -21,8 +29,19 @@ const RecentProjectItem: FC<RecentProjectItemProps> = ({
   recentProject,
   onRemove,
 }) => {
+  const [notFoundOpen, setNotFoundOpen] = useState(false);
+
   const handleOpenProject = useCallback(async () => {
     try {
+      const exists = await invoke<boolean>("check_path_exists", {
+        path: recentProject.path,
+      });
+
+      if (!exists) {
+        setNotFoundOpen(true);
+        return;
+      }
+
       await invoke("open_project_path", { path: recentProject.path });
     } catch (error) {
       console.error("Failed to open project file:", error);
@@ -48,52 +67,79 @@ const RecentProjectItem: FC<RecentProjectItemProps> = ({
     onRemove(recentProject.path);
   }, [recentProject.path, onRemove]);
 
+  const handleRemoveNotFound = useCallback(() => {
+    setNotFoundOpen(false);
+    onRemove(recentProject.path);
+  }, [recentProject.path, onRemove]);
+
   return (
-    <Button
-      variant="ghost"
-      className="flex w-full items-center gap-4 px-4 py-2 h-auto"
-      onClick={handleOpenProject}
-    >
-      <Folder className="size-6 text-muted-foreground" />
-      <div className="flex flex-1 flex-col items-start">
-        <p>{recentProject.name}</p>
-        <p className="text-muted-foreground">{recentProject.path}</p>
-      </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Ellipsis className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={(event) => {
-                event.stopPropagation();
-                handleOpen();
-              }}
+    <>
+      <Button
+        variant="ghost"
+        className="flex w-full items-center gap-4 px-4 py-2 h-auto"
+        onClick={handleOpenProject}
+      >
+        <Folder className="size-6 text-muted-foreground" />
+        <div className="flex flex-1 flex-col items-start">
+          <p>{recentProject.name}</p>
+          <p className="text-muted-foreground">{recentProject.path}</p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(event) => event.stopPropagation()}
             >
-              <Folder className="size-4" />
-              Open in explorer
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={(event) => {
-                event.stopPropagation();
-                handleOnRemove();
-              }}
-            >
-              <Trash className="size-4" />
-              Remove from recent
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </Button>
+              <Ellipsis className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleOpen();
+                }}
+              >
+                <Folder className="size-4" />
+                Open in explorer
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleOnRemove();
+                }}
+              >
+                <Trash className="size-4" />
+                Remove from recent
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </Button>
+
+      <Dialog open={notFoundOpen} onOpenChange={setNotFoundOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Project Not Found</DialogTitle>
+            <DialogDescription>
+              The project file could not be found at the specified path. Would
+              you like to remove it from the recent projects list?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotFoundOpen(false)}>
+              Keep
+            </Button>
+            <Button variant="destructive" onClick={handleRemoveNotFound}>
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
