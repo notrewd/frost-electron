@@ -664,7 +664,7 @@ const EditorRoute = () => {
   const handleDiscardConfirm = useCallback(async () => {
     setShowDiscardDialog(false);
     setProjectEdited(false);
-    await appWindow.close();
+    await appWindow.destroy();
   }, [setProjectEdited, setShowDiscardDialog]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {

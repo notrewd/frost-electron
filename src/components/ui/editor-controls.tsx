@@ -31,7 +31,7 @@ const EditorControls = ({ isLocked, setIsLocked }: EditorControlsProps) => {
       <Button
         variant="secondary"
         size="icon"
-        onClick={() => fitView()}
+        onClick={() => fitView({ duration: 500 })}
         title="Fit View"
       >
         <Maximize className="w-4 h-4" />

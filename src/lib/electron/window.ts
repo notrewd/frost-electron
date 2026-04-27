@@ -5,8 +5,6 @@ type CloseRequestedEvent = {
 };
 
 class AppWindow {
-  private _closeIntercepted = false;
-
   async minimize() {
     await window.electronAPI.window.minimize();
   }
@@ -16,11 +14,7 @@ class AppWindow {
   }
 
   async close() {
-    if (this._closeIntercepted) {
-      await window.electronAPI.window.forceClose();
-    } else {
-      await window.electronAPI.window.close();
-    }
+    await window.electronAPI.window.close();
   }
 
   async destroy() {
@@ -38,8 +32,6 @@ class AppWindow {
   async onCloseRequested(
     callback: (event: CloseRequestedEvent) => void,
   ): Promise<() => void> {
-    this._closeIntercepted = true;
-
     await window.electronAPI.window.onCloseRequested();
 
     const unlisten = window.electronAPI.on("close-requested", () => {
@@ -55,10 +47,7 @@ class AppWindow {
       }
     });
 
-    return () => {
-      this._closeIntercepted = false;
-      unlisten();
-    };
+    return unlisten;
   }
 }
 
