@@ -797,6 +797,10 @@ function setupIPC() {
     await openProjectFromPath(filePath);
   });
 
+  ipcMain.handle("check_path_exists", (_e, { path: filePath }) => {
+    return fs.existsSync(filePath);
+  });
+
   ipcMain.handle("get_recent_projects", () => {
     return getRecentProjects();
   });
