@@ -31,6 +31,7 @@ const PASCAL_CASE = /^[A-Z][a-zA-Z0-9]*$/;
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 const PLURAL_ENDINGS = /(?:s|es|ies|ves)$/i;
 const COLLECTION_TYPES = /^(?:list|array|set|map|collection|dictionary|hashmap|hashset|arraylist|vector|queue|stack|deque)/i;
+const UNMODIFIABLE_TYPE_PREFIX = /^i?(?:immutable|unmodifiable|readonly|frozen)/i;
 
 function isPascalCase(name: string): boolean {
   return PASCAL_CASE.test(name);
@@ -46,6 +47,15 @@ function isPlural(name: string): boolean {
 
 function isCollectionType(type: string): boolean {
   return COLLECTION_TYPES.test(type.trim());
+}
+
+function isUnmodifiableType(type: string): boolean {
+  return UNMODIFIABLE_TYPE_PREFIX.test(type.trim());
+}
+
+function isMutableCollectionType(type: string): boolean {
+  const trimmed = type.trim();
+  return isCollectionType(trimmed) && !isUnmodifiableType(trimmed);
 }
 
 function isGetterFor(method: ObjectNodeMethod, attr: ObjectNodeAttribute): boolean {
@@ -76,7 +86,9 @@ function checkEncapsulationViolation(
     );
   }
 
-  // Check getters that return mutable collection types for private fields
+  // Check getters that return mutable collection types for private fields.
+  // Attribute may hold an unmodifiable view internally, so we only judge by
+  // the getter's declared return type.
   const privateCollectionAttrs = attrs.filter(
     (a) =>
       a.accessModifier !== "public" &&
@@ -89,7 +101,7 @@ function checkEncapsulationViolation(
         m.accessModifier === "public" &&
         isGetterFor(m, attr) &&
         m.returnType &&
-        isCollectionType(m.returnType),
+        isMutableCollectionType(m.returnType),
     );
     for (const getter of exposingGetters) {
       issues.push(
@@ -247,7 +259,7 @@ function checkMutableGetterExposure(
       m.accessModifier === "public" &&
       m.name.match(/^(get|is|has)/i) &&
       m.returnType &&
-      isCollectionType(m.returnType),
+      isMutableCollectionType(m.returnType),
   );
 
   for (const getter of publicGetters) {
