@@ -70,7 +70,7 @@ const WelcomeRoute = () => {
             />
             <p className="text-xl font-medium">Frost</p>
             <div className="flex gap-2">
-              <p className="text-muted-foreground text-sm">version 0.1.2</p>
+              <p className="text-muted-foreground text-sm">version 0.1.3</p>
               <Badge variant="outline">beta</Badge>
             </div>
             <div className="flex flex-col gap-2 mt-10">
